@@ -13,6 +13,7 @@ def main():
 
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(os.path.join(output_dir, posts_dir), exist_ok=True)
 
     posts = []
 
@@ -39,7 +40,8 @@ def main():
 
         # Construct HTML file path
         html_filename = post_code + '.html'  # Replace .md with .html
-        html_path = os.path.join(output_dir, html_filename)
+        html_path = os.path.join(output_dir,posts_dir, html_filename)
+        link_path = os.path.join(posts_dir, html_filename)
 
         # Save the HTML file
         with open(html_path, 'w', encoding='utf-8') as file:
@@ -48,7 +50,7 @@ def main():
         # Append to posts list
         posts.append({
             'title': title,
-            'path': html_path
+            'path': link_path
         })
 
         print(f"Rendered {post_code} to {html_filename}")
@@ -66,7 +68,7 @@ def main():
         index_html += f'<li><a href="{post["path"]}">{post["title"]}</a></li>'
 
     index_html = template.replace('{{ content }}', index_html)
-    index_path = "index.html"
+    index_path = f"{output_dir}/index.html"
     with open(index_path, 'w', encoding='utf-8') as file:
         file.write(index_html)
 
