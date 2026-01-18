@@ -1,9 +1,9 @@
 import os
+import shutil
 from datetime import datetime
 
 import markdown2
 import yaml
-import shutil
 
 
 def ssg():
@@ -82,7 +82,7 @@ def ssg():
     # Load greetings.md
     with open("landing.md", "r", encoding="utf-8") as file:
         md_content = file.read()
-    
+
     index_html = markdown2.markdown(
         md_content, extras=["fenced-code-blocks", "header-ids"]
     )
@@ -92,7 +92,7 @@ def ssg():
 
     index_html = template.replace("{{ content }}", index_html)
     index_path = f"{output_dir}/index.html"
-    
+
     with open(index_path, "w", encoding="utf-8") as file:
         file.write(index_html)
 
@@ -103,4 +103,25 @@ def ssg():
 
 
 if __name__ == "__main__":
+    import argparse
+    import asyncio
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--dev", action="store_true", help="Run dev server with live reload"
+    )
+    parser.add_argument("--host", default="127.0.0.1", help="Dev server host")
+    parser.add_argument("--port", type=int, default=8000, help="Dev server port")
+    args = parser.parse_args()
+
     ssg()
+
+    live_env = os.getenv("LIVE_RELOAD")
+    if args.dev or (live_env and live_env != "0"):
+        # Import dev server only when requested so CI remains unaffected
+        from dev_server import run_dev
+
+        try:
+            asyncio.run(run_dev(ssg, host=args.host, port=args.port))
+        except KeyboardInterrupt:
+            print("Dev server stopped")
