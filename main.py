@@ -1,14 +1,17 @@
 import os
+from datetime import datetime
+
 import markdown2
+import yaml
 
 
-def main():
+def ssg():
     # Define the directory containing the Markdown files
-    posts_dir = './posts'
-    output_dir = './blog'
+    posts_dir = "./posts"
+    output_dir = "./blog"
 
     # Read template.html
-    with open("template.html", 'r', encoding='utf-8') as file:
+    with open("template.html", "r", encoding="utf-8") as file:
         template = file.read()
 
     # Create output directory if it doesn't exist
@@ -22,58 +25,76 @@ def main():
         post_code = post_directory
 
         # Construct full file path
-        file_path = os.path.join(posts_dir, post_directory, 'index.md')
+        file_path = os.path.join(posts_dir, post_directory, "index.md")
 
         # Read the Markdown file
-        with open(file_path, 'r', encoding='utf-8') as file:
+        with open(file_path, "r", encoding="utf-8") as file:
             md_content = file.read()
 
-        # Find first line which contains "# "
         title = md_content.split("# ", 1).pop(1).split("\n").pop(0)
+        # Find first line which contains "# "
+        if md_content.startswith("---"):
+            front_matter = md_content.split("---", 2)[1]
+            parsed = yaml.safe_load(front_matter)
+
+            title = parsed.get("title", title)
+            date = parsed.get("date", "01-01-1997")
+            md_content = md_content.split("---", 2)[2]
+        else:
+            date = "01-01-1997"
 
         # Convert Markdown to HTML
         html_content = markdown2.markdown(
-            md_content, extras=['fenced-code-blocks', "header-ids"])
+            md_content, extras=["fenced-code-blocks", "header-ids", "mermaid"]
+        )
         html_content = html_content.replace(
-            '<img src="', f'<img src="/posts/{post_code}/')
-        html_content = template.replace('{{ content }}', html_content)
+            '<img src="', f'<img src="/posts/{post_code}/'
+        )
+        html_content = template.replace("{{ content }}", html_content)
 
         # Construct HTML file path
-        html_filename = post_code + '.html'  # Replace .md with .html
-        html_path = os.path.join(output_dir,posts_dir, html_filename)
+        html_filename = post_code + ".html"  # Replace .md with .html
+        html_path = os.path.join(output_dir, posts_dir, html_filename)
         link_path = os.path.join(posts_dir, html_filename)
 
         # Save the HTML file
-        with open(html_path, 'w', encoding='utf-8') as file:
+        with open(html_path, "w", encoding="utf-8") as file:
             file.write(html_content)
 
         # Append to posts list
-        posts.append({
-            'title': title,
-            'path': link_path
-        })
+        posts.append(
+            {
+                "title": title,
+                "path": link_path,
+                "date": datetime.strptime(date, "%m-%d-%Y"),
+            }
+        )
 
         print(f"Rendered {post_code} to {html_filename}")
+
+    # Sort posts by date descending
+    posts.sort(key=lambda x: x["date"], reverse=True)
 
     # Render index.html
     index_html = ""
 
     # Load greetings.md
-    with open("landing.md", 'r', encoding='utf-8') as file:
+    with open("landing.md", "r", encoding="utf-8") as file:
         md_content = file.read()
     index_html = markdown2.markdown(
-        md_content, extras=['fenced-code-blocks', "header-ids"])
+        md_content, extras=["fenced-code-blocks", "header-ids"]
+    )
 
     for post in posts:
         index_html += f'<li><a href="{post["path"]}">{post["title"]}</a></li>'
 
-    index_html = template.replace('{{ content }}', index_html)
+    index_html = template.replace("{{ content }}", index_html)
     index_path = f"{output_dir}/index.html"
-    with open(index_path, 'w', encoding='utf-8') as file:
+    with open(index_path, "w", encoding="utf-8") as file:
         file.write(index_html)
 
-    print(f"Rendered index.html")
+    print("Rendered index.html")
 
 
 if __name__ == "__main__":
-    main()
+    ssg()

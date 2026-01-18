@@ -1,3 +1,7 @@
+---
+date: 1-1-2025
+---
+
 # Initial Commit
 
 Every year, almost like clock-work, I have found myself on the couch building a blog from the ground-up. Typically, I go the route of either using Jekyll and rolling one that way, or building an over-engineered CMS. However, lately I have been taking the approach of less is more. 
@@ -11,6 +15,11 @@ pygmentize -S github-dark -f html -a .codehilite > default.css
 ```
 
 And just like that, you have Github dark syntax highlighting for your posts.
+
+```py
+def main():
+    print("Niceeee")
+```
 
 So here we go, hopefully this blog doesn't end the same way the others have.
 
