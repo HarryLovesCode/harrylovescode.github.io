@@ -3,6 +3,7 @@ from datetime import datetime
 
 import markdown2
 import yaml
+import shutil
 
 
 def ssg():
@@ -81,6 +82,7 @@ def ssg():
     # Load greetings.md
     with open("landing.md", "r", encoding="utf-8") as file:
         md_content = file.read()
+    
     index_html = markdown2.markdown(
         md_content, extras=["fenced-code-blocks", "header-ids"]
     )
@@ -90,10 +92,14 @@ def ssg():
 
     index_html = template.replace("{{ content }}", index_html)
     index_path = f"{output_dir}/index.html"
+    
     with open(index_path, "w", encoding="utf-8") as file:
         file.write(index_html)
 
     print("Rendered index.html")
+
+    # Copy default.css to output directory
+    shutil.copy2("default.css", output_dir)
 
 
 if __name__ == "__main__":

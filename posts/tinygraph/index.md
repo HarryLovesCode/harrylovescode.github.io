@@ -110,7 +110,6 @@ def apply_patch(
         new.update(patch)
     return new
 
-
 class Node:
     """
     Minimal node abstraction. Provide a handler callable with signature:

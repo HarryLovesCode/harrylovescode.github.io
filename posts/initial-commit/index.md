@@ -18,7 +18,7 @@ And just like that, you have Github dark syntax highlighting for your posts.
 
 ```py
 def main():
-    print("Niceeee")
+    print("Oooo ahhhh")
 ```
 
 So here we go, hopefully this blog doesn't end the same way the others have.
