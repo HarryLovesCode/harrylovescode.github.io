@@ -41,6 +41,10 @@
         opacity: 60%;
       }
 
+      .landing-li {
+        margin-left: 1rem;
+      }
+
       a:visited,
       a:hover,
       a:focus,
@@ -53,17 +57,20 @@
 
   <body>
     <script>
-      let initialized = false;
+      let mermaidInitialized = false;
 
       function renderMermaid() {
+        const mermaidDiagrams = document.querySelectorAll(".mermaid");
+        if (mermaidDiagrams.length < 1) return;
+
         const isDark = window.matchMedia(
           "(prefers-color-scheme: dark)",
         ).matches;
         const theme = isDark ? "dark" : "default";
 
-        if (!initialized) {
+        if (!mermaidInitialized) {
           // Store original content before first render
-          document.querySelectorAll(".mermaid").forEach((el) => {
+          mermaidDiagrams.forEach((el) => {
             const original = el.textContent.trim();
             if (original && !original.startsWith("<")) {
               el.dataset.original = original;
@@ -72,7 +79,7 @@
 
           mermaid.initialize({ startOnLoad: false, theme });
           mermaid.run();
-          initialized = true;
+          mermaidInitialized = true;
         } else {
           // Update theme and re-render diagrams
           mermaid.initialize({ theme });

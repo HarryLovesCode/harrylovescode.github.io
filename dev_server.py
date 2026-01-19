@@ -7,57 +7,54 @@ from watchfiles import awatch
 
 RELOAD_SCRIPT = """
 <script>
-(function(){
-    async function applyUpdate(){
-        try{
-            const res = await fetch(location.href, {cache:'no-store'});
-            const text = await res.text();
-            const doc = new DOMParser().parseFromString(text, 'text/html');
+  (function () {
+    async function applyUpdate() {
+      try {
+        const res = await fetch(location.href, { cache: "no-store" });
+        const text = await res.text();
+        const doc = new DOMParser().parseFromString(text, "text/html");
 
-            const newContent = doc.querySelector('#content');
-            const oldContent = document.querySelector('#content');
-            if (newContent && oldContent) {
-                // Replace content
-                oldContent.replaceWith(newContent);
+        const newContent = doc.querySelector("#content");
+        const oldContent = document.querySelector("#content");
+        if (newContent && oldContent) {
+          // Replace content
+          oldContent.replaceWith(newContent);
 
-                // Re-run only inline scripts inside the replaced content
-                // Skip external scripts (CDN) as they're already loaded
-                document.querySelectorAll('#content script').forEach(function(oldScript) {
-                    if (oldScript.src) return;
-                    const s = document.createElement('script');
-                    s.textContent = oldScript.textContent;
-                    oldScript.replaceWith(s);
-                });
-
-                if (window.mermaid && typeof renderMermaid === 'function') {
-                    try {
-                        renderMermaid();
-                    } catch (e) {
-                        console.error('renderMermaid error', e);
-                    }
-                }
-            } else {
-                // Fallback to full reload
-                location.reload();
+          if (window.mermaid && typeof renderMermaid === "function") {
+            console.log("Attempting rerender mermaid");
+            try {
+              mermaidInitialized = false;
+              renderMermaid();
+            } catch (e) {
+              console.error("renderMermaid error", e);
             }
-
-            const newTitle = doc.querySelector('title');
-            if (newTitle) document.title = newTitle.textContent;
-        }catch(e){
-            console.error('applyUpdate error', e);
-            location.reload();
+          }
+        } else {
+          // Fallback to full reload
+          location.reload();
         }
+
+        const newTitle = doc.querySelector("title");
+        if (newTitle) document.title = newTitle.textContent;
+      } catch (e) {
+        console.error("applyUpdate error", e);
+        location.reload();
+      }
     }
 
     try {
-        const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
-        const ws = new WebSocket(proto + location.host + '/ws');
-        ws.onmessage = () => { applyUpdate(); };
-        ws.onclose = () => { console.log('reload socket closed'); };
+      const proto = location.protocol === "https:" ? "wss://" : "ws://";
+      const ws = new WebSocket(proto + location.host + "/ws");
+      ws.onmessage = () => {
+        applyUpdate();
+      };
+      ws.onclose = () => {
+        console.log("reload socket closed");
+      };
     } catch (e) {
-        console.error('live-reload error', e);
+      console.error("live-reload error", e);
     }
-})();
+  })();
 </script>
 """
 
