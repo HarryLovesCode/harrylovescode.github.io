@@ -88,7 +88,7 @@ def ssg():
     )
 
     for post in posts:
-        index_html += f'<li><a href="{post["path"]}">{post["title"]}</a></li>'
+        index_html += f'<li class="landing-li"><a href="{post["path"]}">{post["title"]}</a></li>'
 
     index_html = template.replace("{{ content }}", index_html)
     index_path = f"{output_dir}/index.html"

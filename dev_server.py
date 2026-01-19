@@ -20,13 +20,21 @@ RELOAD_SCRIPT = """
                 // Replace content
                 oldContent.replaceWith(newContent);
 
-                // Re-run scripts inside the replaced content
-                const scripts = Array.from(document.querySelectorAll('#content script'));
-                for (const oldScript of scripts) {
+                // Re-run only inline scripts inside the replaced content
+                // Skip external scripts (CDN) as they're already loaded
+                document.querySelectorAll('#content script').forEach(function(oldScript) {
+                    if (oldScript.src) return;
                     const s = document.createElement('script');
-                    if (oldScript.src) s.src = oldScript.src;
                     s.textContent = oldScript.textContent;
                     oldScript.replaceWith(s);
+                });
+
+                if (window.mermaid && typeof renderMermaid === 'function') {
+                    try {
+                        renderMermaid();
+                    } catch (e) {
+                        console.error('renderMermaid error', e);
+                    }
                 }
             } else {
                 // Fallback to full reload
@@ -44,8 +52,8 @@ RELOAD_SCRIPT = """
     try {
         const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
         const ws = new WebSocket(proto + location.host + '/ws');
-        ws.onmessage = () => applyUpdate();
-        ws.onclose = () => console.log('reload socket closed');
+        ws.onmessage = () => { applyUpdate(); };
+        ws.onclose = () => { console.log('reload socket closed'); };
     } catch (e) {
         console.error('live-reload error', e);
     }
