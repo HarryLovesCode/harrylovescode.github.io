@@ -2,7 +2,7 @@
 date: 1-18-2026
 ---
 
-# Less Sloppy Slop
+# Less Sloppy Slop - Tinier Abstractions for LLMs
 
 My "Initial Commit" post did not age well. Regardless, in an attempt to revitalize my blog, I would like to discuss something I have been working on lately. That is, reducing slop in a slop world.
 
@@ -12,7 +12,7 @@ So, keep that in mind that any workflow, graph, or even basic application I work
 
 ## What do we really need?
 
-If I were to ask someone at random to recommend a framework for building GenAI applications, I would likely hear LangChain, LangGraph, maybe PydanticAI if someone feels rather creative, but I would hazard a guess no, "OpenAI package is all you need" would be said. Doing so might send shivers down an AI-wrapper-startup founder's spine.
+If I were to ask someone at random to recommend a framework for building GenAI applications, I would likely hear LangChain, LangGraph, maybe PydanticAI if someone feels rather creative, but I would hazard a guess no, "OpenAI package is all you need" would be said. Doing so might send shivers down an AI-wrapper-start up founder's spine.
 
 Humor aside, at the bare minimum we need a few things:
 
@@ -22,7 +22,7 @@ Humor aside, at the bare minimum we need a few things:
 
 The philosophical framework aligns with KISS (keep-it-simple-stupid). In general, building with AI becomes easier if you assume the model has a default flag for `stupid: true`. This becomes exponentially more apparent as parameter size decreases.
 
-Before diving into a pseudo-code implementation of the basics, I think it is worth mentioning, this approach is not specific to AI. In fact, graphs like this are useful for data-processing, in-game world simulations, and more. A state graph is nothing more than a fancy mental model for a set of functions, function calls, variables, and conditionals. I do, however, prefer this tiny amount of abstraction as it compartimentalizes each node, and it's I/O, from the entire application reducing the cognitive load and increasing the productivity and reusability.
+Before diving into a pseudo-code implementation of the basics, I think it is worth mentioning, this approach is not specific to AI. In fact, graphs like this are useful for data-processing, in-game world simulations, and more. A state graph is nothing more than a fancy mental model for a set of functions, function calls, variables, and conditionals. I do, however, prefer this tiny amount of abstraction as it compartmentalizes each node, and it's I/O, from the entire application reducing the cognitive load and increasing the productivity and reusability.
 
 ## Common Pattern
 
@@ -49,15 +49,15 @@ stateDiagram-v2
 
 The idea here is that we have to answer a user's question based off a set of embedded documents. While a large model would likely get less-thrown off by irrelevant documents returned, smaller models tend to get side-tracked far more easily.
 
-So, we add a "Grader Agent" or, essentially, a LLM call with structured output that determines relevance in accordance to what the user asked.
+So, we add a "Grader Agent" or, essentially, an LLM call with structured output that determines relevance in accordance to what the user asked.
 
 Likewise, there is a non-zero chance the LLM decides to rain on our parade, or that the results are sub-par, we could call a "Rewriter Agent" to reformulate the query grounded on the sources we found and the structure/content of the documents, or to broaden the search.
 
 ## Pseudocode for Graph
 
-This might seem rudimentary, but bear with me. My highschool professor was obsessed with finite-state-machines and game development which shaped my early learning, but I realize a lot of programmers aren't as familiar with this concept. For example, in university, we spent more time on [AVL Trees](https://www.geeksforgeeks.org/dsa/self-balancing-binary-search-trees/) and Discrete mathematics than we did basic graphs. The former two are often less useful in the enterprise software world than the latter.
+This might seem rudimentary, but bear with me. My high school professor was obsessed with finite-state-machines and game development which shaped my early learning, but I realize a lot of programmers aren't as familiar with this concept. For example, in university, we spent more time on [AVL Trees](https://www.geeksforgeeks.org/dsa/self-balancing-binary-search-trees/) and Discrete mathematics than we did basic graphs. The former two are often less useful in the enterprise software world than the latter.
 
-> Sidebar: My highschool professor was awesome. Getting exposed to the rabbit hole of cellular automaton, game theory, and more at a younger age was deeply impactful on how I view the world.
+> Sidebar: My high school professor was awesome. Getting exposed to the rabbit hole of cellular automaton, game theory, and more at a younger age was deeply impactful on how I view the world.
 
 ```text
 BEGIN NODE
@@ -280,13 +280,13 @@ Run with Brython
 
 ## Room for Improvement
 
-All of the above is what I would define as the building blocks for more complex applications. However, I acknowledge, the use-case influences the framework. So, in my pursuit of not reinventing the wheel with each POC, I built [tinygraph-ts](https://github.com/HarryLovesCode/tinygraph-ts/tree/main). Like Pocketflow, it can also be ported in a single-shot to any language. However, it does not prioritize LoC, dependencies, and operator overloads. It just seeks to be simple and to encourage good patterns. 
+All the above is what I would define as the building blocks for more complex applications. However, I acknowledge, the use-case influences the framework. So, in my pursuit of not reinventing the wheel with each POC, I built [tinygraph-ts](https://github.com/HarryLovesCode/tinygraph-ts/tree/main). Like Pocketflow, it can also be ported in a single-shot to any language. However, it does not prioritize LoC, dependencies, and operator overloads. It just seeks to be simple and to encourage good patterns. 
 
 ---
 
 ⚠️ Note: This is *just* my rationale and not the critique of any developer. It is my thought process on why this library is not for *me*.
 
-I really wanted to like [Pocketflow](https://github.com/The-Pocket/PocketFlow), but what I thought was a super-power of being small, was a library that attempts to be minimal, if only for the sake of it. The project cites, "separation of concerns" as the rational for the structure of a node:
+I really wanted to like [Pocketflow](https://github.com/The-Pocket/PocketFlow), but what I thought was a superpower of being small, was a library that attempts to be minimal, if only for the sake of it. The project cites, "separation of concerns" as the rational for the structure of a node:
 
 - prep
 - exec
@@ -297,7 +297,7 @@ I really wanted to like [Pocketflow](https://github.com/The-Pocket/PocketFlow), 
 3. I will skip over operator overload in Python, that is largely preferential.
 4. Finally, why have a separate `async` implementation if you could handle `async` versus `sync` using `inspect.iscoroutinefunction(object)`? You could even use `concurrent.futures` to offload them to a `ThreadPoolExecutor` and have fine-grained concurrency controls.
 
-That said, I love the philosophy of the project. Keep all the dependencies of the graph *outside* the graph. You are not tied to any library and which dependencies it wraps. This is such a beautiful concept. If I want to POC using a specific VectorDB locally, but use a different one in production, I don't have to shop around or even think in two places before I have started the project. If one works locally, but doesn't work down the line, I can built a tiny adapter.
+That said, I love the philosophy of the project. Keep all the dependencies of the graph *outside* the graph. You are not tied to any library and which dependencies it wraps. This is such a beautiful concept. If I want to POC using a specific VectorDB locally, but use a different one in production, I don't have to shop around or even think in two places before I have started the project. If one works locally but doesn't work down the line, I can build a tiny adapter.
 
 Libraries should enable, not hinder and for all I critique about Pocketflow, simplicity in 2026 is a welcome change and other libraries should take note.
 

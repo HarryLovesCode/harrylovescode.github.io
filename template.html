@@ -14,7 +14,7 @@
     <style>
       :root {
         color-scheme: light dark;
-        background-color: light-dark(white, black);
+        background-color: light-dark(white, #0d111749);
       }
 
       html {
@@ -31,6 +31,13 @@
       pre {
         padding: 1rem;
         overflow-x: auto;
+        font-size: 0.8rem;
+        background-color: #0d1117;
+      }
+
+      code {
+        font-size: 0.9rem;
+        background-color: #0d1117;
       }
 
       a {
@@ -43,6 +50,21 @@
 
       .landing-li {
         margin-left: 1rem;
+      }
+
+      /* Center images */
+      img {
+        border-radius: 0.5rem;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* Txt Markdown blocks do not get styled by default.css */
+      pre {
+        border-radius: 0.5rem;
+        background: #0d1117;
+        color: #e6edf3;
       }
 
       a:visited,
