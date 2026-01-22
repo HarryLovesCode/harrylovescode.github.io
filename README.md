@@ -8,6 +8,7 @@ Main changes are:
 - File-watching
 - Hot-reloading
 - Basic front-matter support
+- Images (and image resize, compression as Webp)
 
 ```
 LIVE_RELOAD=1 uv run main.py
