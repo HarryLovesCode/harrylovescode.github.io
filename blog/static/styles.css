@@ -26,6 +26,11 @@ code {
   background-color: #0d1117;
 }
 
+p code {
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+}
+
 a {
   opacity: 65%;
 }

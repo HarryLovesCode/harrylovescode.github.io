@@ -57,7 +57,7 @@ Likewise, there is a non-zero chance the LLM decides to rain on our parade, or t
 
 This might seem rudimentary, but bear with me. My high school professor was obsessed with finite-state-machines and game development which shaped my early learning, but I realize a lot of programmers aren't as familiar with this concept. For example, in university, we spent more time on [AVL Trees](https://www.geeksforgeeks.org/dsa/self-balancing-binary-search-trees/) and Discrete mathematics than we did basic graphs. The former two are often less useful in the enterprise software world than the latter.
 
-> Sidebar: My high school professor was awesome. Getting exposed to the rabbit hole of cellular automaton, game theory, and more at a younger age was deeply impactful on how I view the world.
+Sidebar: My high school professor was awesome. Getting exposed to the rabbit hole of cellular automaton, game theory, and more at a younger age was deeply impactful on how I view the world.
 
 ```text
 BEGIN NODE
