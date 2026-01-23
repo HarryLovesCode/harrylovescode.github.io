@@ -10,7 +10,6 @@ wheels/
 .venv
 
 # Blog output
-blog
 index.html
 
 # Mac

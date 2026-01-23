@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Harry's Blog</title>
+    <link rel="stylesheet" href="/default.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.12.0/mermaid.min.js"
+      integrity="sha512-5TKaYvhenABhlGIKSxAWLFJBZCSQw7HTV7aL1dJcBokM/+3PNtfgJFlv8E6Us/B1VMlQ4u8sPzjudL9TEQ06ww=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+
+  <body>
+    <script>
+      let mermaidInitialized = false;
+
+      function renderMermaid() {
+        const mermaidDiagrams = document.querySelectorAll(".mermaid");
+        if (mermaidDiagrams.length < 1) return;
+
+        const isDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        const theme = isDark ? "dark" : "default";
+
+        if (!mermaidInitialized) {
+          // Store original content before first render
+          mermaidDiagrams.forEach((el) => {
+            const original = el.textContent.trim();
+            if (original && !original.startsWith("<")) {
+              el.dataset.original = original;
+            }
+          });
+
+          mermaid.initialize({ startOnLoad: false, theme });
+          mermaid.run();
+          mermaidInitialized = true;
+        } else {
+          // Update theme and re-render diagrams
+          mermaid.initialize({ theme });
+
+          document.querySelectorAll(".mermaid").forEach((el) => {
+            const graphDefinition = el.dataset.original;
+            if (graphDefinition) {
+              el.removeAttribute("data-processed");
+              el.textContent = graphDefinition;
+            }
+          });
+
+          mermaid.run();
+        }
+      }
+
+      // Render when DOM is ready
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", renderMermaid);
+      } else {
+        renderMermaid();
+      }
+
+      // Watch for theme changes
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", renderMermaid);
+    </script>
+    <a href="/" id="head-link">Harry's Blog</a>
+    <div id="content">{{ content }}</div>
+  </body>
+</html>
