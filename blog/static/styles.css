@@ -53,6 +53,26 @@ pre {
   color: #e6edf3;
 }
 
+details {
+  border-style: solid;
+  border-color: rgb(98, 98, 98);
+  border-radius: 0.5rem;
+  border-width: 1px;
+  padding: 0.5rem;
+}
+
+blockquote {
+  font-style: italic;
+  border-left: 2px solid #ccc;
+  padding-left: 1rem;
+  margin-left: 1rem;
+}
+
+blockquote p {
+  font-size: 1.5rem;
+  display: inline;
+}
+
 a:visited,
 a:hover,
 a:focus,

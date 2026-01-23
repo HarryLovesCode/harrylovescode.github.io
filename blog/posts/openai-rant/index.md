@@ -2,7 +2,7 @@
 date: 1-21-2026
 ---
 
-# Who (or What) Wrote OpenAI's Documentation?
+# [Rant] Who (or What) Wrote OpenAI's Documentation?
 
 Today, shortly after returning from work and a grocery run to prepare for the upcoming South-East Snowpocalypse, I began my daily HackerNews perusal. I ended up going down a complete tangent through synthetic data generation, which I had brought up earlier in the day, all the way to a post written by Huggingface on a 50-LOC MCP agent.
 

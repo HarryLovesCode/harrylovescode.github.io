@@ -11,5 +11,5 @@ Main changes are:
 - Images (and image resize, compression as Webp)
 
 ```
-LIVE_RELOAD=1 uv run main.py
+cd blog && LIVE_RELOAD=1 uv run main.py
 ```

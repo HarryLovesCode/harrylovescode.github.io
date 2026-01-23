@@ -1,9 +1,10 @@
 import os
 import shutil
 from datetime import datetime
+
 import markdown2
-from PIL import Image
 import yaml
+from PIL import Image
 
 
 def check_image_valid(image_path):
@@ -23,7 +24,7 @@ def filter_invalid_images(base_path):
         for img in potential_images
     ]
 
-    return list(filter(lambda x: x is not None, images))
+    return [img for img in images if img is not None]
 
 
 def compress_image(image_path, output_path, quality=50):
@@ -50,10 +51,8 @@ def ssg():
     with open("static/template.html", "r", encoding="utf-8") as file:
         template = file.read()
 
-    map(
-        lambda x: os.makedirs(x, exist_ok=True),
-        [OUTPUT_DIR, OUTPUT_POSTS_DIR, OUTPUT_IMAGES_DIR],
-    )
+    for d in [OUTPUT_DIR, OUTPUT_POSTS_DIR, OUTPUT_IMAGES_DIR]:
+        os.makedirs(d, exist_ok=True)
 
     posts = []
 
