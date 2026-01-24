@@ -1,8 +1,10 @@
 ---
 date: 1-22-2026
+tags:
+  - Artifact
 ---
 
-# [Artifact] - Quick and dirty semi-safe environments with Deno + Wasm
+# Quick and dirty semi-safe environments with Deno + Wasm
 
 In my last post, I touched on a post made by the Huggingface team about a "50-LoC MCP Agent." This concept, implementation, and my own approach I will return to eventually, but I wanted to touch on [Smolagents](https://github.com/huggingface/smolagents). I remember hearing that they used [E2B](https://e2b.dev/) for sandboxed execution. This, of course, I would understand if we were talking about untrusted users, unvetted prompts, etc., but this is a homelab post so I will forgo those things.
 
@@ -24,6 +26,7 @@ I'll test these out, and update with any findings. At least for now, here is the
 
 <details>
 <summary>Expand Pyodide Deno Code</summary>
+
 ```ts
 import pyodideModule from "npm:pyodide/pyodide.js";
 

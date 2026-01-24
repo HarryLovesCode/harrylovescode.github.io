@@ -1,10 +1,56 @@
 import os
 import shutil
 from datetime import datetime
+import re
+import html
 
 import markdown2
 import yaml
 from PIL import Image
+
+
+def add_line_numbers(html_content):
+    """Add line numbers to code blocks."""
+    import re
+    
+    def add_lines_to_block(code_block):
+        # Remove trailing empty lines for counting
+        lines = code_block.rstrip('\n').split('\n')
+        numbered_lines = []
+        
+        for i, line in enumerate(lines, 1):
+            numbered_lines.append(f'<span class="ln">{i}</span>{line}')
+        
+        return chr(10).join(numbered_lines)
+    
+    # Find all codehilite code blocks and add line numbers
+    def process_codehilite(match):
+        code_block = match.group(1)
+        numbered = add_lines_to_block(code_block)
+        return f'<div class="codehilite"><pre><span></span><code>{numbered}</code></pre></div>'
+    
+    html_content = re.sub(
+        r'<div class="codehilite">\s*<pre><span></span><code>(.*?)</code></pre>\s*</div>',
+        process_codehilite,
+        html_content,
+        flags=re.DOTALL
+    )
+    
+    # Find all plain code blocks (txt, without codehilite) and add line numbers
+    # Also wrap them in codehilite div for consistent styling
+    def process_plain(match):
+        code_block = match.group(1)
+        numbered = add_lines_to_block(code_block)
+        return f'<div class="codehilite"><pre><span></span><code>{numbered}</code></pre></div>'
+    
+    html_content = re.sub(
+        r'<pre><code>(.*?)</code></pre>',
+        process_plain,
+        html_content,
+        flags=re.DOTALL
+    )
+    
+    return html_content
 
 
 def check_image_valid(image_path):
@@ -67,6 +113,7 @@ def ssg():
         with open(file_path, "r", encoding="utf-8") as file:
             md_content = file.read()
 
+        parsed = {}
         title = md_content.split("# ", 1).pop(1).split("\n").pop(0)
         # Find first line which contains "# "
         if md_content.startswith("---"):
@@ -79,14 +126,57 @@ def ssg():
         else:
             date = "01-01-1997"
 
+        # Extract tags from front-matter (if provided) or from bracketed tokens in title
+        tags = []
+        if 'parsed' in locals():
+            raw_tags = parsed.get("tags")
+            if isinstance(raw_tags, str):
+                tags = [t.strip() for t in raw_tags.split(",") if t.strip()]
+            elif isinstance(raw_tags, list):
+                tags = raw_tags
+
+        # If no tags from front-matter, try to extract leading [Tag] tokens from the title
+        prefix_match = re.match(r'^\s*((?:\[[^\]]+\]\s*)+)', title)
+        if prefix_match and not tags:
+            prefix = prefix_match.group(1)
+            tags = [t.strip() for t in re.findall(r'\[([^\]]+)\]', prefix)]
+            title = title[len(prefix):].strip()
+
+        # Ensure the H1 in md_content does not contain bracketed tags
+        md_content = re.sub(r'(?m)^#\s*(?:\[[^\]]+\]\s*)*(.*)$', r'# \1', md_content, count=1)
+
+        # Extract a short excerpt (first paragraph) for landing
+        paragraphs = [p for p in md_content.split("\n\n") if p.strip()]
+        if paragraphs:
+            first_para = paragraphs[0]
+            excerpt_html = markdown2.markdown(first_para, extras=["fenced-code-blocks", "header-ids"])
+            excerpt_text = re.sub(r'<[^>]+>', '', excerpt_html).strip().replace("\n", " ")
+            if len(excerpt_text) > 150:
+                excerpt_text = excerpt_text[:147].rstrip() + "..."
+        else:
+            excerpt_text = ""
+
         # Convert Markdown to HTML
         html_content = markdown2.markdown(
-            md_content, extras=["fenced-code-blocks", "header-ids", "mermaid"]
+            md_content, extras=["fenced-code-blocks", "header-ids", "mermaid", "codehilite"]
         )
+        
+        # Add line numbers to code blocks
+        html_content = add_line_numbers(html_content)
+
+        # Inject tags HTML (if any) right after the first H1
+        if tags:
+            tag_html = '<div class="post-meta"><div class="tags">' + "".join(
+                f'<span class="tag">{t}</span>' for t in tags
+            ) + "</div></div>"
+            if "</h1>" in html_content:
+                html_content = html_content.replace("</h1>", f"</h1>{tag_html}", 1)
+            else:
+                html_content = tag_html + html_content
 
         # Fix image src paths and render into template
         html_content = html_content.replace('<img src="', '<img src="/posts/images/')
-        html_content = template.replace("{{ content }}", html_content)
+        rendered_template = template.replace("{{ content }}", html_content) 
 
         # Copy and compress images from post dir to output images dir
         valid_images = filter_invalid_images(post_dir)
@@ -103,7 +193,7 @@ def ssg():
 
         # Save the HTML file
         with open(html_path, "w", encoding="utf-8") as file:
-            file.write(html_content)
+            file.write(rendered_template)
 
         # Append to posts list
         posts.append(
@@ -111,6 +201,8 @@ def ssg():
                 "title": title,
                 "path": link_path,
                 "date": datetime.strptime(date, "%m-%d-%Y"),
+                "tags": tags,
+                "excerpt": excerpt_text,
             }
         )
 
@@ -127,18 +219,43 @@ def ssg():
         md_content, extras=["fenced-code-blocks", "header-ids"]
     )
 
-    for post in posts:
-        index_html += (
-            f'<li class="landing-li"><a href="{post["path"]}">{post["title"]}</a></li>'
-        )
+    # Build a compact list of posts with title + date only
+    if posts:
+        list_items = []
+        for post in posts:
+            title = html.escape(post["title"])
+            path = post["path"]
+            date_iso = post["date"].strftime("%Y-%m-%d")
+            date_display = post["date"].strftime("%b %d, %Y")
+            # Build a compact card with title + date only
+            meta_html = f'<div class="post-meta"><time datetime="{date_iso}">{date_display}</time></div>'
+            list_items.append(
+                f'<li class="landing-item"><a class="landing-title" href="{path}">{title}</a>{meta_html}</li>'
+            )
+        index_html += "<ul class=\"landing-list\">" + "\n".join(list_items) + "</ul>"
 
     index_html = template.replace("{{ content }}", index_html)
     index_path = os.path.join(OUTPUT_DIR, "index.html")
+
+    # Load and render interests.md as a separate page
+    with open("pages/interests.md", "r", encoding="utf-8") as file:
+        interests_md = file.read()
+
+    interests_html = markdown2.markdown(
+        interests_md, extras=["fenced-code-blocks", "header-ids"]
+    )
+    interests_page = template.replace("{{ content }}", interests_html)
+    interests_path = os.path.join(OUTPUT_DIR, "interests.html")
 
     with open(index_path, "w", encoding="utf-8") as file:
         file.write(index_html)
 
     print("Rendered index.html")
+
+    with open(interests_path, "w", encoding="utf-8") as file:
+        file.write(interests_page)
+
+    print("Rendered interests.html")
 
     # Copy default.css to output directory
     shutil.copy2("static/styles.css", OUTPUT_DIR)

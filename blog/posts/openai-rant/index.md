@@ -1,8 +1,10 @@
 ---
 date: 1-21-2026
+tags:
+  - Rant
 ---
 
-# [Rant] Who (or What) Wrote OpenAI's Documentation?
+# Who (or What) Wrote OpenAI's Documentation?
 
 Today, shortly after returning from work and a grocery run to prepare for the upcoming South-East Snowpocalypse, I began my daily HackerNews perusal. I ended up going down a complete tangent through synthetic data generation, which I had brought up earlier in the day, all the way to a post written by Huggingface on a 50-LOC MCP agent.
 
@@ -22,6 +24,7 @@ In this case, the safest place I know is the [OpenAI SDK documentation - Tool Ca
 
 <details>
 <summary>Expand Code</summary>
+
 ```js
 import OpenAI from "openai";
 const openai = new OpenAI();
@@ -113,7 +116,6 @@ json.dumps
 This is getting creative. I'm starting to think this is human because there is no way you casually insert [Python JSON](https://docs.python.org/3/library/json.html) in there. I'll give it the benefit of the doubt, if it is trying to call `json.dumps` it must be attempting to stringify, right?
 
 ```txt
-
 // Logs
 Final input:
 [

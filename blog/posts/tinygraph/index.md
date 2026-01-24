@@ -1,8 +1,10 @@
 ---
 date: 1-18-2026
+tags:
+  - Code
 ---
 
-# [Code] Less Sloppy Slop - Tinier Abstractions for LLMs
+# Less Sloppy Slop - Tinier Abstractions for LLMs
 
 My "Initial Commit" post did not age well. Regardless, in an attempt to revitalize my blog, I would like to discuss something I have been working on lately. That is, reducing slop in a slop world.
 
@@ -273,8 +275,7 @@ def handle_click(event):
     output_container <= f"Took {diff:.3f}ms. Only so you know it really ran =)"
 </script>
 
-Run with Brython
-<button id="py-run">Execute Python Inline</button>
+<button id="py-run">Run with Brython</button>
 <pre id="output"></pre>
 
 

@@ -3,9 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Notes and essays by Harry" />
+    <meta name="theme-color" content="#121212" />
+    <meta property="og:title" content="Harry's Blog" />
+    <meta property="og:description" content="Notes and essays by Harry" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="canonical" href="/" />
     <title>Harry's Blog</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/default.css" />
-    <script
+    <script defer
       src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.12.0/mermaid.min.js"
       integrity="sha512-5TKaYvhenABhlGIKSxAWLFJBZCSQw7HTV7aL1dJcBokM/+3PNtfgJFlv8E6Us/B1VMlQ4u8sPzjudL9TEQ06ww=="
       crossorigin="anonymous"
@@ -67,7 +75,67 @@
         .matchMedia("(prefers-color-scheme: dark)")
         .addEventListener("change", renderMermaid);
     </script>
-    <a href="/" id="head-link">Harry's Blog</a>
-    <div id="content">{{ content }}</div>
+    <a class="sr-only" href="#content">Skip to content</a>
+    <header class="site-header">
+      <div class="container header-content">
+        <a href="/" class="site-title">Harry's Blog</a>
+        <nav class="site-nav">
+          <a href="/">Home</a>
+          <a href="/interests.html">Interests</a>
+          <a href="https://github.com/harrylovescode" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </header>
+    <main id="content" class="container prose">{{ content }}</main>
+    <footer class="site-footer">
+      <div class="container footer-content">
+        <p>&copy; 2026 Harry. All rights reserved.</p>
+        <div class="footer-links">
+          <a href="/">Home</a>
+          <a href="https://github.com/harrylovescode" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </div>
+      </div>
+    </footer>
+    <button id="scrollToTopBtn" class="scroll-to-top" aria-label="Scroll to top">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    </button>
+    <script>
+      const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+      const footer = document.querySelector('.site-footer');
+      
+      function updateButtonPosition() {
+        const footerRect = footer.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const buttonHeight = scrollToTopBtn.offsetHeight;
+        const padding = 2; // 2rem in pixels (16px * 2)
+        
+        // If footer is visible and would overlap the button, fade it out
+        if (footerRect.top < viewportHeight - (buttonHeight + padding * 8)) {
+          scrollToTopBtn.classList.add('hidden');
+        } else {
+          scrollToTopBtn.classList.remove('hidden');
+        }
+      }
+      
+      window.addEventListener('scroll', () => {
+        if (window.pageYOffset > 300) {
+          scrollToTopBtn.classList.add('visible');
+        } else {
+          scrollToTopBtn.classList.remove('visible');
+        }
+        updateButtonPosition();
+      });
+      
+      window.addEventListener('resize', updateButtonPosition);
+      
+      scrollToTopBtn.addEventListener('click', () => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
+    </script>
   </body>
 </html>
