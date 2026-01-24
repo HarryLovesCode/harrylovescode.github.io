@@ -12,44 +12,41 @@ from PIL import Image
 def add_line_numbers(html_content):
     """Add line numbers to code blocks."""
     import re
-    
+
     def add_lines_to_block(code_block):
         # Remove trailing empty lines for counting
-        lines = code_block.rstrip('\n').split('\n')
+        lines = code_block.rstrip("\n").split("\n")
         numbered_lines = []
-        
+
         for i, line in enumerate(lines, 1):
             numbered_lines.append(f'<span class="ln">{i}</span>{line}')
-        
+
         return chr(10).join(numbered_lines)
-    
+
     # Find all codehilite code blocks and add line numbers
     def process_codehilite(match):
         code_block = match.group(1)
         numbered = add_lines_to_block(code_block)
         return f'<div class="codehilite"><pre><span></span><code>{numbered}</code></pre></div>'
-    
+
     html_content = re.sub(
         r'<div class="codehilite">\s*<pre><span></span><code>(.*?)</code></pre>\s*</div>',
         process_codehilite,
         html_content,
-        flags=re.DOTALL
+        flags=re.DOTALL,
     )
-    
+
     # Find all plain code blocks (txt, without codehilite) and add line numbers
     # Also wrap them in codehilite div for consistent styling
     def process_plain(match):
         code_block = match.group(1)
         numbered = add_lines_to_block(code_block)
         return f'<div class="codehilite"><pre><span></span><code>{numbered}</code></pre></div>'
-    
+
     html_content = re.sub(
-        r'<pre><code>(.*?)</code></pre>',
-        process_plain,
-        html_content,
-        flags=re.DOTALL
+        r"<pre><code>(.*?)</code></pre>", process_plain, html_content, flags=re.DOTALL
     )
-    
+
     return html_content
 
 
@@ -103,17 +100,21 @@ def ssg():
     for filename in sorted(os.listdir(pages_dir)):
         if filename.endswith(".html"):
             page_name = filename[:-5]  # Remove .html extension
-            html_pages.append({
-                "name": page_name,
-                "filename": filename,
-                "display_name": page_name.capitalize()
-            })
+            html_pages.append(
+                {
+                    "name": page_name,
+                    "filename": filename,
+                    "display_name": page_name.capitalize(),
+                }
+            )
 
     # Generate navigation links for HTML pages
     nav_links = '<a href="/">Home</a>\n'
     for page in html_pages:
         if page["name"] != "landing":  # Don't add landing page link, it's the home
-            nav_links += f'          <a href="/{page["filename"]}">{page["display_name"]}</a>\n'
+            nav_links += (
+                f'          <a href="/{page["filename"]}">{page["display_name"]}</a>\n'
+            )
 
     for d in [OUTPUT_DIR, OUTPUT_POSTS_DIR, OUTPUT_IMAGES_DIR]:
         os.makedirs(d, exist_ok=True)
@@ -146,7 +147,7 @@ def ssg():
 
         # Extract tags from front-matter (if provided) or from bracketed tokens in title
         tags = []
-        if 'parsed' in locals():
+        if "parsed" in locals():
             raw_tags = parsed.get("tags")
             if isinstance(raw_tags, str):
                 tags = [t.strip() for t in raw_tags.split(",") if t.strip()]
@@ -154,21 +155,27 @@ def ssg():
                 tags = raw_tags
 
         # If no tags from front-matter, try to extract leading [Tag] tokens from the title
-        prefix_match = re.match(r'^\s*((?:\[[^\]]+\]\s*)+)', title)
+        prefix_match = re.match(r"^\s*((?:\[[^\]]+\]\s*)+)", title)
         if prefix_match and not tags:
             prefix = prefix_match.group(1)
-            tags = [t.strip() for t in re.findall(r'\[([^\]]+)\]', prefix)]
-            title = title[len(prefix):].strip()
+            tags = [t.strip() for t in re.findall(r"\[([^\]]+)\]", prefix)]
+            title = title[len(prefix) :].strip()
 
         # Ensure the H1 in md_content does not contain bracketed tags
-        md_content = re.sub(r'(?m)^#\s*(?:\[[^\]]+\]\s*)*(.*)$', r'# \1', md_content, count=1)
+        md_content = re.sub(
+            r"(?m)^#\s*(?:\[[^\]]+\]\s*)*(.*)$", r"# \1", md_content, count=1
+        )
 
         # Extract a short excerpt (first paragraph) for landing
         paragraphs = [p for p in md_content.split("\n\n") if p.strip()]
         if paragraphs:
             first_para = paragraphs[0]
-            excerpt_html = markdown2.markdown(first_para, extras=["fenced-code-blocks", "header-ids"])
-            excerpt_text = re.sub(r'<[^>]+>', '', excerpt_html).strip().replace("\n", " ")
+            excerpt_html = markdown2.markdown(
+                first_para, extras=["fenced-code-blocks", "header-ids"]
+            )
+            excerpt_text = (
+                re.sub(r"<[^>]+>", "", excerpt_html).strip().replace("\n", " ")
+            )
             if len(excerpt_text) > 150:
                 excerpt_text = excerpt_text[:147].rstrip() + "..."
         else:
@@ -176,17 +183,20 @@ def ssg():
 
         # Convert Markdown to HTML
         html_content = markdown2.markdown(
-            md_content, extras=["fenced-code-blocks", "header-ids", "mermaid", "codehilite"]
+            md_content,
+            extras=["fenced-code-blocks", "header-ids", "mermaid", "codehilite"],
         )
-        
+
         # Add line numbers to code blocks
         html_content = add_line_numbers(html_content)
 
         # Inject tags HTML (if any) right after the first H1
         if tags:
-            tag_html = '<div class="post-meta"><div class="tags">' + "".join(
-                f'<span class="tag">{t}</span>' for t in tags
-            ) + "</div></div>"
+            tag_html = (
+                '<div class="post-meta"><div class="tags">'
+                + "".join(f'<span class="tag">{t}</span>' for t in tags)
+                + "</div></div>"
+            )
             if "</h1>" in html_content:
                 html_content = html_content.replace("</h1>", f"</h1>{tag_html}", 1)
             else:
@@ -194,7 +204,9 @@ def ssg():
 
         # Fix image src paths and render into template
         html_content = html_content.replace('<img src="', '<img src="/posts/images/')
-        rendered_template = template.replace("{{ content }}", html_content).replace("{{ nav_links }}", nav_links) 
+        rendered_template = template.replace("{{ content }}", html_content).replace(
+            "{{ nav_links }}", nav_links
+        )
 
         # Copy and compress images from post dir to output images dir
         valid_images = filter_invalid_images(post_dir)
@@ -248,16 +260,20 @@ def ssg():
             list_items.append(
                 f'<div class="landing-item"><a class="landing-title" href="{path}">{title}</a>{meta_html}</div>'
             )
-        index_html += "<div class=\"landing-list\">" + "\n".join(list_items) + "</div>"
+        index_html += '<div class="landing-list">' + "\n".join(list_items) + "</div>"
 
-    index_html = template.replace("{{ content }}", index_html).replace("{{ nav_links }}", nav_links)
+    index_html = template.replace("{{ content }}", index_html).replace(
+        "{{ nav_links }}", nav_links
+    )
     index_path = os.path.join(OUTPUT_DIR, "index.html")
 
     # Load and render interests.html as a separate page
     with open("pages/interests.html", "r", encoding="utf-8") as file:
         interests_html = file.read()
 
-    interests_page = template.replace("{{ content }}", interests_html).replace("{{ nav_links }}", nav_links)
+    interests_page = template.replace("{{ content }}", interests_html).replace(
+        "{{ nav_links }}", nav_links
+    )
     interests_path = os.path.join(OUTPUT_DIR, "interests.html")
 
     with open(index_path, "w", encoding="utf-8") as file:

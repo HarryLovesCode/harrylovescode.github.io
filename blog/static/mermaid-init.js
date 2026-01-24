@@ -44,4 +44,6 @@ if (document.readyState === "loading") {
 }
 
 // Watch for theme changes
-window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderMermaid);
+window
+  .matchMedia("(prefers-color-scheme: dark)")
+  .addEventListener("change", renderMermaid);
