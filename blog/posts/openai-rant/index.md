@@ -99,7 +99,7 @@ console.log(JSON.stringify(response.output, null, 2));
 
 ![Short Circuit](./image.png)
 
-Excuse me, `const` declarations can only be declared inside a block? What even is this error? I unhover, and see: `'getHoroscope' is declared but its value is never read.` in addition to: `Cannot find name 'get_horoscope'. Did you mean 'horoscope'?`
+Excuse me, `const` declarations can only be declared inside a block? What even is this error? I unhover, and see: `'getHoroscope' is declared but its value is never read.` and: `Cannot find name 'get_horoscope'. Did you mean 'horoscope'?`
 
 ![Sam AIltman](./agi.png)
 
@@ -155,7 +155,7 @@ Final input:
 
 You have got to be kidding me. This shouldn't even be an object to begin with.
 
-```ts
+```txt
 output: horoscope
 ```
 

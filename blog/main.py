@@ -270,10 +270,10 @@ def ssg():
 
     print("Rendered interests.html")
 
-    # Copy all CSS files from static to output directory
-    for css_file in os.listdir("static"):
-        if css_file.endswith(".css"):
-            shutil.copy2(os.path.join("static", css_file), OUTPUT_DIR)
+    # Copy all CSS and JS files from static to output directory
+    for static_file in os.listdir("static"):
+        if static_file.endswith(".css") or static_file.endswith(".js"):
+            shutil.copy2(os.path.join("static", static_file), OUTPUT_DIR)
 
 
 if __name__ == "__main__":

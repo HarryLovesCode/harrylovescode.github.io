@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Notes and essays by Harry" />
-    <meta name="theme-color" content="#121212" />
+    <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)" />
     <meta property="og:title" content="Harry's Blog" />
     <meta property="og:description" content="Notes and essays by Harry" />
     <meta name="twitter:card" content="summary" />
@@ -27,58 +28,10 @@
   </head>
 
   <body>
-    <script>
-      let mermaidInitialized = false;
-
-      function renderMermaid() {
-        const mermaidDiagrams = document.querySelectorAll(".mermaid");
-        if (mermaidDiagrams.length < 1) return;
-
-        const isDark = window.matchMedia(
-          "(prefers-color-scheme: dark)",
-        ).matches;
-        const theme = isDark ? "dark" : "default";
-
-        if (!mermaidInitialized) {
-          // Store original content before first render
-          mermaidDiagrams.forEach((el) => {
-            const original = el.textContent.trim();
-            if (original && !original.startsWith("<")) {
-              el.dataset.original = original;
-            }
-          });
-
-          mermaid.initialize({ startOnLoad: false, theme });
-          mermaid.run();
-          mermaidInitialized = true;
-        } else {
-          // Update theme and re-render diagrams
-          mermaid.initialize({ theme });
-
-          document.querySelectorAll(".mermaid").forEach((el) => {
-            const graphDefinition = el.dataset.original;
-            if (graphDefinition) {
-              el.removeAttribute("data-processed");
-              el.textContent = graphDefinition;
-            }
-          });
-
-          mermaid.run();
-        }
-      }
-
-      // Render when DOM is ready
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", renderMermaid);
-      } else {
-        renderMermaid();
-      }
-
-      // Watch for theme changes
-      window
-        .matchMedia("(prefers-color-scheme: dark)")
-        .addEventListener("change", renderMermaid);
-    </script>
+    <script defer src="/mermaid-init.js"></script>
+    <script defer src="/prefetch-nav.js"></script>
+    <script defer src="/scroll-to-top.js"></script>
+    <script defer src="/responsive.js"></script>
     <a class="sr-only" href="#content">Skip to content</a>
     <header class="site-header">
       <div class="container header-content">
@@ -169,125 +122,5 @@
         <polyline points="18 15 12 9 6 15"></polyline>
       </svg>
     </button>
-    <script>
-      const scrollToTopBtn = document.getElementById("scrollToTopBtn");
-      const footer = document.querySelector(".site-footer");
-
-      function updateButtonPosition() {
-        const footerRect = footer.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
-        const buttonHeight = scrollToTopBtn.offsetHeight;
-        const padding = 2; // 2rem in pixels (16px * 2)
-
-        // If footer is visible and would overlap the button, fade it out
-        if (footerRect.top < viewportHeight - (buttonHeight + padding * 8)) {
-          scrollToTopBtn.classList.add("hidden");
-        } else {
-          scrollToTopBtn.classList.remove("hidden");
-        }
-      }
-
-      window.addEventListener("scroll", () => {
-        if (window.pageYOffset > 300) {
-          scrollToTopBtn.classList.add("visible");
-        } else {
-          scrollToTopBtn.classList.remove("visible");
-        }
-        updateButtonPosition();
-      });
-
-      window.addEventListener("resize", updateButtonPosition);
-
-      scrollToTopBtn.addEventListener("click", () => {
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-      });
-    </script>
-    <script>
-      // Link prefetching on hover for snappier navigation
-      const prefetchedLinks = new Set();
-
-      function prefetchLink(url) {
-        if (prefetchedLinks.has(url)) return;
-        prefetchedLinks.add(url);
-
-        const link = document.createElement("link");
-        link.rel = "prefetch";
-        link.href = url;
-        link.as = "document";
-        document.head.appendChild(link);
-      }
-
-      // Add hover listeners to all internal links
-      document.addEventListener("mouseover", (e) => {
-        const link = e.target.closest("a");
-        if (!link) return;
-
-        const href = link.getAttribute("href");
-        if (!href) return;
-
-        // Only prefetch internal links (same origin, HTML pages)
-        try {
-          const url = new URL(href, window.location.origin);
-          if (
-            url.origin === window.location.origin &&
-            (href.endsWith(".html") || !href.includes("."))
-          ) {
-            prefetchLink(href);
-          }
-        } catch {
-          // Invalid URL, skip
-        }
-      });
-
-      // Nav toggle for small screens
-      (function () {
-        const navToggle = document.getElementById("navToggle");
-        const siteNav = document.getElementById("siteNav");
-        if (!navToggle || !siteNav) return;
-
-        function closeNav() {
-          siteNav.classList.remove("open");
-          navToggle.setAttribute("aria-expanded", "false");
-          const hh = navToggle.querySelector(".icon-hamburger");
-          const cc = navToggle.querySelector(".icon-close");
-          if (hh) hh.style.display = "";
-          if (cc) cc.style.display = "none";
-        }
-        function openNav() {
-          siteNav.classList.add("open");
-          navToggle.setAttribute("aria-expanded", "true");
-          const hh = navToggle.querySelector(".icon-hamburger");
-          const cc = navToggle.querySelector(".icon-close");
-          if (hh) hh.style.display = "none";
-          if (cc) cc.style.display = "";
-        }
-
-        navToggle.addEventListener("click", (e) => {
-          const expanded = navToggle.getAttribute("aria-expanded") === "true";
-          if (expanded) closeNav();
-          else openNav();
-        });
-
-        // Close when clicking outside
-        document.addEventListener("click", (e) => {
-          if (!siteNav.contains(e.target) && !navToggle.contains(e.target)) {
-            closeNav();
-          }
-        });
-
-        // Close when resizing to larger screens
-        window.addEventListener("resize", () => {
-          if (window.innerWidth > 760) closeNav();
-        });
-
-        // Close on Escape key
-        document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape") closeNav();
-        });
-      })();
-    </script>
   </body>
 </html>
