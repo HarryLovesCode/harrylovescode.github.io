@@ -21,7 +21,6 @@ RELOAD_SCRIPT = """
           oldContent.replaceWith(newContent);
 
           if (window.mermaid && typeof renderMermaid === "function") {
-            console.log("Attempting rerender mermaid");
             try {
               mermaidInitialized = false;
               renderMermaid();

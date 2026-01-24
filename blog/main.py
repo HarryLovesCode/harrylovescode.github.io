@@ -97,6 +97,24 @@ def ssg():
     with open("static/template.html", "r", encoding="utf-8") as file:
         template = file.read()
 
+    # Discover and process HTML pages
+    pages_dir = "pages"
+    html_pages = []
+    for filename in sorted(os.listdir(pages_dir)):
+        if filename.endswith(".html"):
+            page_name = filename[:-5]  # Remove .html extension
+            html_pages.append({
+                "name": page_name,
+                "filename": filename,
+                "display_name": page_name.capitalize()
+            })
+
+    # Generate navigation links for HTML pages
+    nav_links = '<a href="/">Home</a>\n'
+    for page in html_pages:
+        if page["name"] != "landing":  # Don't add landing page link, it's the home
+            nav_links += f'          <a href="/{page["filename"]}">{page["display_name"]}</a>\n'
+
     for d in [OUTPUT_DIR, OUTPUT_POSTS_DIR, OUTPUT_IMAGES_DIR]:
         os.makedirs(d, exist_ok=True)
 
@@ -176,7 +194,7 @@ def ssg():
 
         # Fix image src paths and render into template
         html_content = html_content.replace('<img src="', '<img src="/posts/images/')
-        rendered_template = template.replace("{{ content }}", html_content) 
+        rendered_template = template.replace("{{ content }}", html_content).replace("{{ nav_links }}", nav_links) 
 
         # Copy and compress images from post dir to output images dir
         valid_images = filter_invalid_images(post_dir)
@@ -211,13 +229,11 @@ def ssg():
     # Sort posts by date descending
     posts.sort(key=lambda x: x["date"], reverse=True)
 
-    # Load landing.md
-    with open("pages/landing.md", "r", encoding="utf-8") as file:
-        md_content = file.read()
+    # Load landing.html
+    with open("pages/landing.html", "r", encoding="utf-8") as file:
+        landing_content = file.read()
 
-    index_html = markdown2.markdown(
-        md_content, extras=["fenced-code-blocks", "header-ids"]
-    )
+    index_html = landing_content
 
     # Build a compact list of posts with title + date only
     if posts:
@@ -230,21 +246,18 @@ def ssg():
             # Build a compact card with title + date only
             meta_html = f'<div class="post-meta"><time datetime="{date_iso}">{date_display}</time></div>'
             list_items.append(
-                f'<li class="landing-item"><a class="landing-title" href="{path}">{title}</a>{meta_html}</li>'
+                f'<div class="landing-item"><a class="landing-title" href="{path}">{title}</a>{meta_html}</div>'
             )
-        index_html += "<ul class=\"landing-list\">" + "\n".join(list_items) + "</ul>"
+        index_html += "<div class=\"landing-list\">" + "\n".join(list_items) + "</div>"
 
-    index_html = template.replace("{{ content }}", index_html)
+    index_html = template.replace("{{ content }}", index_html).replace("{{ nav_links }}", nav_links)
     index_path = os.path.join(OUTPUT_DIR, "index.html")
 
-    # Load and render interests.md as a separate page
-    with open("pages/interests.md", "r", encoding="utf-8") as file:
-        interests_md = file.read()
+    # Load and render interests.html as a separate page
+    with open("pages/interests.html", "r", encoding="utf-8") as file:
+        interests_html = file.read()
 
-    interests_html = markdown2.markdown(
-        interests_md, extras=["fenced-code-blocks", "header-ids"]
-    )
-    interests_page = template.replace("{{ content }}", interests_html)
+    interests_page = template.replace("{{ content }}", interests_html).replace("{{ nav_links }}", nav_links)
     interests_path = os.path.join(OUTPUT_DIR, "interests.html")
 
     with open(index_path, "w", encoding="utf-8") as file:

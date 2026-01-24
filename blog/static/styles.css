@@ -25,6 +25,10 @@ body {
   height: 100%;
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+} 
+
 body {
   margin: 0;
   display: flex;
@@ -44,9 +48,11 @@ body {
     "Segoe UI Emoji",
     "Segoe UI Symbol";
   font-size: 1.0625rem; /* ~17px for improved readability */
-  line-height: 1.6;
+  line-height: 1.7;
+  letter-spacing: -0.2px;
   background-color: var(--bg);
   color: var(--text);
+  -webkit-font-smoothing: antialiased;
 } 
 
 /* Layout utilities */
@@ -67,10 +73,10 @@ body {
   grid-template-columns:
     [full-start] minmax(1rem, 1fr)
     [wide-start] minmax(0, 4rem)
-    [content-start] min(100%, var(--prose-max-width)) [content-end]
+    [content-start] minmax(0, var(--prose-max-width)) [content-end]
     minmax(0, 4rem) [wide-end]
     minmax(1rem, 1fr) [full-end];
-}
+} 
 
 .prose > * {
   grid-column: content;
@@ -83,13 +89,30 @@ main#content {
   flex: 1 0 auto;
   align-content: start;
   min-height: auto;
+  animation: fadeIn 150ms ease-out;
+  will-change: opacity;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0.95;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main#content {
+    animation: none;
+  }
 } 
 
 /* Code blocks and inline code */
 pre,
 .prose pre,
 .codehilite {
-  padding: 1rem;
+  padding: 1.25rem;
   overflow-x: auto;
   font-size: 0.9rem;
   background: var(--code-bg);
@@ -97,6 +120,16 @@ pre,
   border-radius: var(--radius);
   border: 1px solid transparent;
   box-shadow: none;
+  line-height: 1.6;
+  font-family:
+    "JetBrains Mono",
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    "Roboto Mono",
+    "Courier New",
+    monospace;
 }
 
 .prose pre {
@@ -113,9 +146,17 @@ code,
   padding: 0.15rem 0.35rem;
   border-radius: 0.25rem;
   font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New",
+    "JetBrains Mono",
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    "Roboto Mono",
+    "Courier New",
     monospace;
   border: 1px solid var(--code-border);
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 p code {
@@ -128,6 +169,7 @@ a {
   color: var(--link);
   text-decoration: underline;
   text-underline-offset: 3px;
+  transition: color 150ms ease;
 }
 
 a:hover,
@@ -149,10 +191,11 @@ a:focus-visible {
 /* New landing list/card styles */
 .landing-list {
   list-style: none;
-  padding: 1rem 0 0 0; /* slightly reduce top padding so it sits directly below the intro */
+  padding: 1rem 0 0 0;
   margin: 0 0 1.25rem 0;
-  display: block; /* ensure it doesn't behave like a flex/grid container */
-  border-top: 1px solid var(--divider); /* divider between intro and posts */
+  display: flex;
+  flex-direction: column;
+  grid-column: content;
 } 
 
 /* Cards used for landing list and interests */
@@ -167,13 +210,16 @@ a:focus-visible {
 }
 
 .landing-item {
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-  align-self: start;
+  width: 100%;
   margin-top: 1rem; /* spacing between list items */
+}
+
+.landing-item > * {
+  padding: 0 1rem;
 }
 
 .landing-item:first-child {
@@ -239,13 +285,15 @@ a:focus-visible {
 
 .landing-item .landing-title,
 .interest-card h3 {
-  font-weight: 600;
-  font-size: 1.1rem;
+  font-family: Merriweather, Georgia, serif;
+  font-weight: 700;
+  font-size: 1.15rem;
   color: var(--text);
   text-decoration: none;
   position: relative;
   z-index: 1;
   transition: color 300ms ease;
+  letter-spacing: -0.5px;
 }
 
 .landing-item .landing-title:hover {
@@ -283,16 +331,31 @@ img {
 }
 
 /* Markdown / Prose styles */
+.prose a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.prose a:hover,
+.prose a:active {
+  color: var(--link-hover);
+}
+
 .prose p {
-  margin: 0 0 1rem 0;
+  margin: 0 0 1.25rem 0;
   color: var(--text);
+  line-height: 1.75;
+  letter-spacing: -0.15px;
 }
 
 .lead,
 .prose .lead {
   font-size: 1.25rem;
   color: var(--muted);
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.7;
+  font-weight: 500;
 }
 
 .prose img {
@@ -498,6 +561,7 @@ hr,
 .prose hr {
   border: none;
   height: 1px;
+  width: 100%;
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -522,15 +586,60 @@ hr,
   padding: 1rem 0;
 }
 
-/* Fallback for hr outside .prose */
-
-
-
-
 /* Titles, tags, and modern lists */
 .prose h1 {
-  font-size: 2rem;
-  margin: 0 0 0.5rem;
+  font-family: Merriweather, Georgia, serif;
+  font-size: 2.5rem;
+  margin: 0 0 0.75rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+
+/* Shared section title style for page headings */
+.section-title {
+  font-family: Merriweather, Georgia, serif;
+  font-size: 2.5rem;
+  margin: 0 0 0.75rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  letter-spacing: -1px;
+} 
+
+.prose h2 {
+  font-family: Merriweather, Georgia, serif;
+  font-size: 1.875rem;
+  margin: 1.75rem 0 0.75rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+}
+
+.prose h3 {
+  font-family: Merriweather, Georgia, serif;
+  font-size: 1.5rem;
+  margin: 1.5rem 0 0.5rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.prose h4 {
+  font-family: Merriweather, Georgia, serif;
+  font-size: 1.25rem;
+  margin: 1.25rem 0 0.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.prose h5,
+.prose h6 {
+  font-family: Merriweather, Georgia, serif;
+  font-size: 1.125rem;
+  margin: 1rem 0 0.5rem;
   font-weight: 700;
   color: var(--text);
 }
@@ -562,12 +671,13 @@ hr,
 
 .prose ul {
   padding-left: 1.25rem;
-  margin: 0 0 1rem 0;
+  margin: 0 0 1.25rem 0;
   list-style: disc;
 }
 
 .prose li {
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.65rem;
+  line-height: 1.75;
 }
 
 .prose ul li::marker {
@@ -708,9 +818,12 @@ a:focus-visible {
 
 .header-content {
   padding: 1rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .site-title {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   font-size: 1.25rem;
   font-weight: 700;
   color: #ffffff;
@@ -722,6 +835,7 @@ a:focus-visible {
   transition: transform 260ms cubic-bezier(.2,.8,.2,1), color 150ms ease;
   will-change: transform;
   transform: translateY(0);
+  letter-spacing: 0.15px;
 }
 
 .site-title:hover,
@@ -745,6 +859,7 @@ a:focus-visible {
   display: flex;
   gap: 1.5rem;
   align-items: center;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 .site-nav a {
@@ -763,10 +878,10 @@ a:focus-visible {
 .site-footer {
   margin-top: 2rem;
   border-top: 1px solid var(--divider);
-  padding: 1rem 0;
   background: var(--bg);
   position: relative;
   z-index: 0;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 } 
 
 .footer-content {
@@ -798,9 +913,7 @@ a:focus-visible {
 
 /* Intro Section */
 .intro-section {
-  max-width: 72rem;
-  margin: 0 auto 1rem; /* match the landing-list top padding */
-  padding: 0 1rem;
+  grid-column: content;
 } 
 
 .intro-section h2 {
@@ -824,9 +937,7 @@ a:focus-visible {
 
 /* Interests Section */
 .interests-section {
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: 0 1rem;
+  grid-column: content;
 }
 
 .interests-section h2 {
@@ -834,10 +945,11 @@ a:focus-visible {
   font-weight: 700;
   margin: 0 0 2rem 0;
   color: var(--text);
-}
+}   
 
 .interests-grid {
   display: grid;
+  margin-top: 2rem;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.25rem;
 }

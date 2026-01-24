@@ -4,7 +4,7 @@ tags:
   - Code
 ---
 
-# Less Sloppy Slop - Tinier Abstractions for LLMs
+# Less Sloppy Slop - Tinier Abstractions for LLM
 
 My "Initial Commit" post did not age well. Regardless, in an attempt to revitalize my blog, I would like to discuss something I have been working on lately. That is, reducing slop in a slop world.
 
