@@ -183,7 +183,7 @@ def example_usage():
 
 <script type="text/python">
 from time import time
-from browser import bind, document, alert
+from browser import bind, document, alert, html
 from typing import Callable, Dict, Optional, Tuple, Any
 
 
@@ -265,7 +265,13 @@ def example_usage():
 
 @bind(document['py-run'], 'click')
 def handle_click(event):
-    output_container = document["output"]
+    output_container = document.getElementById("output")
+    if output_container is None:
+        output_container = html.PRE()
+        output_container.id = "output"
+        btn = document["py-run"]
+        # Insert the <pre> after the button
+        btn.parent.insertBefore(output_container, btn.nextSibling)
     start = time()
     final = example_usage()
     end = time()
@@ -276,7 +282,6 @@ def handle_click(event):
 </script>
 
 <button id="py-run">Run with Brython</button>
-<pre id="output"></pre>
 
 
 ## Room for Improvement

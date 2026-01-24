@@ -9,7 +9,7 @@
   --code-bg: rgba(255, 255, 255, 0.02);
   --code-border: rgba(255, 255, 255, 0.04);
   --code-text: #e0e0e0;
-  --prose-max-width: 65ch;
+  --prose-max-width: min(100ch, 100%);
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 1rem;
@@ -829,6 +829,7 @@ a:focus-visible {
   color: #ffffff;
   text-decoration: none;
   display: inline-block; /* allow transforms to affect layout */
+  white-space: nowrap;
   /* Small bottom padding extends the pointer hit area so moving the title
      on hover doesn't remove the cursor from the element and cause flicker */
   padding-bottom: 4px;
@@ -873,6 +874,27 @@ a:focus-visible {
 .site-nav a:hover {
   color: var(--text);
 }
+
+/* Nav toggle (hamburger) */
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 0.25rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+}
+
+.nav-toggle:focus-visible {
+  outline: 3px solid rgba(136,136,136,0.25);
+  outline-offset: 2px;
+}
+
+
 
 /* Footer Styling */
 .site-footer {
@@ -956,8 +978,44 @@ a:focus-visible {
 
 
 
-/* Responsive adjustments */
+/* Responsive adjustments for small screens (<=640px) */
 @media (max-width: 640px) {
+  /* Nav: show toggle, collapse nav into an overlay */
+  .nav-toggle {
+    display: inline-flex;
+  }
+
+  .site-nav {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 1rem;
+    background: var(--bg);
+    border: 1px solid var(--divider);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 60;
+    min-width: 180px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  }
+
+  .site-nav.open {
+    display: flex;
+  }
+
+  .site-nav a {
+    display: block;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Home is generated as the first link; hide it to prevent wrapping */
+  .site-nav a:first-child {
+    display: none;
+  }
+
+  /* Layout & hero adjustments */
   .hero-section {
     padding: 2.5rem 1rem 2rem;
   }
@@ -983,18 +1041,50 @@ a:focus-visible {
     padding: 1.25rem;
   }
 
-  .header-content,
   .footer-content {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
   }
   
+  .header-content {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
   .site-nav,
   .footer-links {
     gap: 1rem;
   }
+
+  /* Make the prose grid collapse to use available width and reduce gutters */
+  .prose {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    grid-template-columns:
+      [full-start] minmax(0, 0.5rem)
+      [wide-start] minmax(0, 1rem)
+      [content-start] minmax(0, 100%) [content-end]
+      minmax(0, 1rem) [wide-end]
+      minmax(0, 0.5rem) [full-end];
+  }
+
+  /* Scroll-to-top adjustments */
+  .scroll-to-top {
+    bottom: 1rem;
+    right: 1rem;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .scroll-to-top svg {
+    width: 20px;
+    height: 20px;
+  }
 }
+
+
 
 /* Button styles */
 button,
@@ -1209,17 +1299,4 @@ button.btn-lg,
   visibility: hidden;
 }
 
-@media (max-width: 640px) {
-  .scroll-to-top {
-    bottom: 1rem;
-    right: 1rem;
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-  
-  .scroll-to-top svg {
-    width: 20px;
-    height: 20px;
-  }
-}
 
