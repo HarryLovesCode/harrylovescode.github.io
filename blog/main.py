@@ -1,294 +1,374 @@
-import os
-import shutil
-from datetime import datetime
-import re
 import html
+import logging
+import os
+import re
+import shutil
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, Iterable, List, Set, Tuple
 
 import markdown2
 import yaml
-from PIL import Image
+from images import compress_image, filter_invalid_images
+from render import add_line_numbers
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
-def add_line_numbers(html_content):
-    """Add line numbers to code blocks."""
-    import re
+@dataclass(frozen=True)
+class Config:
+    base_dir: Path = Path(__file__).parent.resolve()
+    posts_dir: Path = base_dir / "posts"
+    pages_dir: Path = base_dir / "pages"
+    output_dir: Path = base_dir / "build"
+    template_path: Path = base_dir / "static" / "template.html"
+    static_dir: Path = base_dir / "static"
 
-    def add_lines_to_block(code_block):
-        # Remove trailing empty lines for counting
-        lines = code_block.rstrip("\n").split("\n")
-        numbered_lines = []
 
-        for i, line in enumerate(lines, 1):
-            numbered_lines.append(f'<span class="ln">{i}</span>{line}')
+@dataclass(frozen=True)
+class Page:
+    name: str  # e.g. 'about'
+    filename: str  # e.g. 'about.html'
+    display_name: str  # e.g. 'About'
 
-        return chr(10).join(numbered_lines)
 
-    # Find all codehilite code blocks and add line numbers
-    def process_codehilite(match):
-        code_block = match.group(1)
-        numbered = add_lines_to_block(code_block)
-        return f'<div class="codehilite"><pre><span></span><code>{numbered}</code></pre></div>'
+@dataclass
+class Post:
+    code: str
+    title: str
+    date: datetime
+    tags: List[str]
+    excerpt: str
+    content_html: str
+    link_path: Path  # relative path used in links
 
-    html_content = re.sub(
-        r'<div class="codehilite">\s*<pre><span></span><code>(.*?)</code></pre>\s*</div>',
-        process_codehilite,
-        html_content,
-        flags=re.DOTALL,
+
+def load_template(template_path: Path) -> str:
+    """
+    Read the template file.
+    """
+    return template_path.read_text(encoding="utf-8")
+
+
+def discover_pages(pages_dir: Path) -> List[Page]:
+    """
+    Return a sorted list of Page objects found in *pages_dir*.
+    """
+    pages = []
+
+    for entry in sorted(pages_dir.iterdir()):
+        if entry.suffix.lower() == ".html":
+            name = entry.stem
+            display_name = name.capitalize()
+            pages.append(
+                Page(name=name, filename=entry.name, display_name=display_name)
+            )
+    return pages
+
+
+def generate_nav_links(pages: List[Page]) -> str:
+    """
+    Build the navigation bar (Home + each page).
+    """
+    links = ['<a href="/">Home</a>\n']
+    for page in pages:
+        links.append(f'<a href="/{page.filename}">{page.display_name}</a>\n')
+    return "".join(links)
+
+
+def ensure_dirs(paths: Iterable[Path]) -> None:
+    """
+    Create directories if they don't exist.
+    """
+    for path in paths:
+        path.mkdir(parents=True, exist_ok=True)
+
+
+def extract_front_matter(md_text: str) -> Tuple[Dict, str]:
+    """
+    Split *md_text* into (metadata_dict, body_text).
+
+    Front-matter is expected to be wrapped in `---` at the start of the file.
+    """
+    if md_text.startswith("---"):
+        parts = md_text.split("---", 2)
+        front_matter_yaml = parts[1]
+        body = parts[2] if len(parts) > 2 else ""
+        metadata = yaml.safe_load(front_matter_yaml) or {}
+        return metadata, body
+
+    return {}, md_text
+
+
+def extract_title(body: str) -> str:
+    """
+    Return the first H1 heading from *body*.
+    Falls back to the very first non-empty line if no H1 is found.
+    """
+    match = re.search(r"^#\s*(.*)", body, flags=re.MULTILINE)
+
+    if match:
+        return match.group(1).strip()
+    lines = [ln for ln in body.splitlines() if ln.strip()]
+
+    return lines[0].strip() if lines else "Untitled"
+
+
+def extract_tags_from_title(title: str) -> Tuple[List[str], str]:
+    """
+    Detect leading `[Tag]` tokens and return them along with the cleaned title.
+    Example: "[news][python] My Post" → (["news", "python"], "My Post")
+    """
+    tags = []
+    match = re.match(r"^\s*((?:$[^$]+$\s*)+)", title)
+    if match:
+        prefix = match.group(1)
+        tags = [t.strip() for t in re.findall(r"$([^$]+)$", prefix)]
+        title = title[len(prefix) :].strip()
+
+    return tags, title
+
+
+def extract_excerpt(body: str) -> str:
+    """
+    Grab the first paragraph (or first block of text separated by double newlines),
+    convert it to Markdown → HTML → plain text and truncate to 150 chars.
+    """
+    paragraphs = [p for p in body.split("\n\n") if p.strip()]
+    if not paragraphs:
+        return ""
+
+    first_para = paragraphs[0]
+    html_frag = markdown2.markdown(
+        first_para,
+        extras=["fenced-code-blocks", "header-ids"],
+    )
+    text = re.sub(r"<[^>]+>", "", html_frag).strip().replace("\n", " ")
+
+    if len(text) > 150:
+        return text[:147].rstrip() + "..."
+
+    return text
+
+
+def convert_markdown(md: str) -> str:
+    """
+    Render Markdown to HTML with the required extras.
+    """
+    return markdown2.markdown(
+        md,
+        extras=["fenced-code-blocks", "header-ids", "mermaid", "codehilite"],
     )
 
-    # Find all plain code blocks (txt, without codehilite) and add line numbers
-    # Also wrap them in codehilite div for consistent styling
-    def process_plain(match):
-        code_block = match.group(1)
-        numbered = add_lines_to_block(code_block)
-        return f'<div class="codehilite"><pre><span></span><code>{numbered}</code></pre></div>'
 
-    html_content = re.sub(
-        r"<pre><code>(.*?)</code></pre>", process_plain, html_content, flags=re.DOTALL
-    )
+def process_post(
+    post_code: str, post_dir: Path, output_images_dir: Path, img_set: Set[str]
+) -> Post | None:
+    """
+    Read a single post, parse its content and return a `Post` object.
 
-    return html_content
+    *post_dir* must contain an `index.md`.  Images are copied/compressed to
+    *output_images_dir*.  Duplicate images across posts are skipped.
+    """
+    index_md = post_dir / "index.md"
+    if not index_md.is_file():
+        logging.warning(f"Missing index.md in {post_dir}")
+        return None
 
+    md_text = index_md.read_text(encoding="utf-8")
+    metadata, body = extract_front_matter(md_text)
 
-def check_image_valid(image_path):
+    raw_title = extract_title(body)
+    date_str = metadata.get("date", "01-01-1997")
     try:
-        with Image.open(image_path) as img:
-            img.verify()  # Verify that it is, in fact an image
-        return True
-    except (IOError, SyntaxError):
-        # Invalid, don't spam logs.
-        return False
+        date_obj = datetime.strptime(date_str, "%m-%d-%Y")
+    except ValueError:
+        logging.warning(
+            f"Invalid date '{date_str}' in {post_code}, defaulting to 01-01-1997"
+        )
+        date_obj = datetime(1997, 1, 1)
 
-
-def filter_invalid_images(base_path):
-    potential_images = os.listdir(base_path)
-    images = [
-        img if check_image_valid(os.path.join(base_path, img)) else None
-        for img in potential_images
-    ]
-
-    return [img for img in images if img is not None]
-
-
-def compress_image(image_path, output_path, quality=50):
-    try:
-        with Image.open(image_path) as img:
-            # Handle some of my screenshots being in RGBA mode
-            rgb_im = img.convert("RGB")
-            # Resize to maximum 1280 pixels on the longest side
-            max_size = 720
-            rgb_im.thumbnail((max_size, max_size))
-            rgb_im.save(output_path, "WEBP", quality=quality)
-    except Exception as e:
-        print(f"Error compressing image {image_path}: {e}")
-
-
-def ssg():
-    # Directory configuration
-    POSTS_DIR = os.path.abspath("posts")
-    OUTPUT_DIR = os.path.abspath(os.path.join(os.getcwd(), "../build"))
-    OUTPUT_POSTS_DIR = os.path.join(OUTPUT_DIR, "posts")
-    OUTPUT_IMAGES_DIR = os.path.join(OUTPUT_POSTS_DIR, "images")
-
-    # Read template.html
-    with open("static/template.html", "r", encoding="utf-8") as file:
-        template = file.read()
-
-    # Discover and process HTML pages
-    pages_dir = "pages"
-    html_pages = []
-    for filename in sorted(os.listdir(pages_dir)):
-        if filename.endswith(".html"):
-            page_name = filename[:-5]  # Remove .html extension
-            html_pages.append(
-                {
-                    "name": page_name,
-                    "filename": filename,
-                    "display_name": page_name.capitalize(),
-                }
-            )
-
-    # Generate navigation links for HTML pages
-    nav_links = '<a href="/">Home</a>\n'
-    for page in html_pages:
-        if page["name"] != "landing":  # Don't add landing page link, it's the home
-            nav_links += (
-                f'          <a href="/{page["filename"]}">{page["display_name"]}</a>\n'
-            )
-
-    for d in [OUTPUT_DIR, OUTPUT_POSTS_DIR, OUTPUT_IMAGES_DIR]:
-        os.makedirs(d, exist_ok=True)
-
-    posts = []
-
-    # Iterate over all dirs in the posts directory
-    for post_code in os.listdir(POSTS_DIR):
-        post_dir = os.path.join(POSTS_DIR, post_code)
-
-        # Construct full file path
-        file_path = os.path.join(post_dir, "index.md")
-
-        # Read the Markdown file
-        with open(file_path, "r", encoding="utf-8") as file:
-            md_content = file.read()
-
-        parsed = {}
-        title = md_content.split("# ", 1).pop(1).split("\n").pop(0)
-        # Find first line which contains "# "
-        if md_content.startswith("---"):
-            front_matter = md_content.split("---", 2)[1]
-            parsed = yaml.safe_load(front_matter)
-
-            title = parsed.get("title", title)
-            date = parsed.get("date", "01-01-1997")
-            md_content = md_content.split("---", 2)[2]
-        else:
-            date = "01-01-1997"
-
-        # Extract tags from front-matter (if provided) or from bracketed tokens in title
+    # Tag get
+    if isinstance(metadata.get("tags"), list):
+        tags = metadata["tags"]
+    elif isinstance(metadata.get("tags"), str):
+        tags = [t.strip() for t in metadata["tags"].split(",") if t.strip()]
+    else:
         tags = []
-        if "parsed" in locals():
-            raw_tags = parsed.get("tags")
-            if isinstance(raw_tags, str):
-                tags = [t.strip() for t in raw_tags.split(",") if t.strip()]
-            elif isinstance(raw_tags, list):
-                tags = raw_tags
 
-        # If no tags from front-matter, try to extract leading [Tag] tokens from the title
-        prefix_match = re.match(r"^\s*((?:\[[^\]]+\]\s*)+)", title)
-        if prefix_match and not tags:
-            prefix = prefix_match.group(1)
-            tags = [t.strip() for t in re.findall(r"\[([^\]]+)\]", prefix)]
-            title = title[len(prefix) :].strip()
+    title = raw_title
+    if not tags:  # try to pull tags from the title itself
+        extracted, cleaned = extract_tags_from_title(raw_title)
+        tags = extracted
+        title = cleaned
 
-        # Ensure the H1 in md_content does not contain bracketed tags
-        md_content = re.sub(
-            r"(?m)^#\s*(?:\[[^\]]+\]\s*)*(.*)$", r"# \1", md_content, count=1
+    # Front-matter can override the title
+    title = metadata.get("title", title)
+    body = re.sub(r"(?m)^#\s*(?:$[^$]+$\s*)*(.*)$", r"# \1", body, count=1)
+
+    excerpt_text = extract_excerpt(body)
+
+    # Markdown + Code helpers
+    html_content = convert_markdown(body)
+    html_content = add_line_numbers(html_content)
+
+    # Tag write
+    if tags:
+        tag_html = (
+            '<div class="post-meta"><div class="tags">'
+            + "".join(f'<span class="tag">{t}</span>' for t in tags)
+            + "</div></div>"
         )
-
-        # Extract a short excerpt (first paragraph) for landing
-        paragraphs = [p for p in md_content.split("\n\n") if p.strip()]
-        if paragraphs:
-            first_para = paragraphs[0]
-            excerpt_html = markdown2.markdown(
-                first_para, extras=["fenced-code-blocks", "header-ids"]
-            )
-            excerpt_text = (
-                re.sub(r"<[^>]+>", "", excerpt_html).strip().replace("\n", " ")
-            )
-            if len(excerpt_text) > 150:
-                excerpt_text = excerpt_text[:147].rstrip() + "..."
+        if "</h1>" in html_content:
+            html_content = html_content.replace("</h1>", f"</h1>{tag_html}", 1)
         else:
-            excerpt_text = ""
+            html_content = tag_html + html_content
+    # Fix image paths
+    html_content = html_content.replace('<img src="', '<img src="/posts/images/')
 
-        # Convert Markdown to HTML
-        html_content = markdown2.markdown(
-            md_content,
-            extras=["fenced-code-blocks", "header-ids", "mermaid", "codehilite"],
-        )
+    for img_name in filter_invalid_images(post_dir):
+        if img_name in img_set:
+            continue
+        src_path = post_dir / img_name
+        dst_path = output_images_dir / img_name
+        dst_path.parent.mkdir(parents=True, exist_ok=True)
+        compress_image(src_path, dst_path, quality=85)
+        img_set.add(img_name)
 
-        # Add line numbers to code blocks
-        html_content = add_line_numbers(html_content)
+    link_path = Path("posts") / f"{post_code}.html"
 
-        # Inject tags HTML (if any) right after the first H1
-        if tags:
-            tag_html = (
-                '<div class="post-meta"><div class="tags">'
-                + "".join(f'<span class="tag">{t}</span>' for t in tags)
-                + "</div></div>"
-            )
-            if "</h1>" in html_content:
-                html_content = html_content.replace("</h1>", f"</h1>{tag_html}", 1)
-            else:
-                html_content = tag_html + html_content
+    return Post(
+        code=post_code,
+        title=title,
+        date=date_obj,
+        tags=tags,
+        excerpt=excerpt_text,
+        content_html=html_content,
+        link_path=link_path,
+    )
 
-        # Fix image src paths and render into template
-        html_content = html_content.replace('<img src="', '<img src="/posts/images/')
-        rendered_template = template.replace("{{ content }}", html_content).replace(
-            "{{ nav_links }}", nav_links
-        )
 
-        # Copy and compress images from post dir to output images dir
-        valid_images = filter_invalid_images(post_dir)
-        for image_name in valid_images:
-            image_path = os.path.join(post_dir, image_name)
-            out_image_path = os.path.join(OUTPUT_IMAGES_DIR, image_name)
-            os.makedirs(os.path.dirname(out_image_path), exist_ok=True)
-            compress_image(image_path, out_image_path, quality=85)
-
-        # Construct HTML file path
-        html_filename = f"{post_code}.html"
-        html_path = os.path.join(OUTPUT_POSTS_DIR, html_filename)
-        link_path = os.path.join("posts", html_filename)
-
-        # Save the HTML file
-        with open(html_path, "w", encoding="utf-8") as file:
-            file.write(rendered_template)
-
-        # Append to posts list
-        posts.append(
-            {
-                "title": title,
-                "path": link_path,
-                "date": datetime.strptime(date, "%m-%d-%Y"),
-                "tags": tags,
-                "excerpt": excerpt_text,
-            }
-        )
-
-        print(f"Rendered {post_code} to {html_filename}")
-
-    # Sort posts by date descending
-    posts.sort(key=lambda x: x["date"], reverse=True)
-
-    # Load landing.html
-    with open("pages/landing.html", "r", encoding="utf-8") as file:
-        landing_content = file.read()
-
-    index_html = landing_content
-
-    # Build a compact list of posts with title + date only
-    if posts:
-        list_items = []
-        for post in posts:
-            title = html.escape(post["title"])
-            path = post["path"]
-            date_iso = post["date"].strftime("%Y-%m-%d")
-            date_display = post["date"].strftime("%b %d, %Y")
-            # Build a compact card with title + date only
-            meta_html = f'<div class="post-meta"><time datetime="{date_iso}">{date_display}</time></div>'
-            list_items.append(
-                f'<div class="landing-item"><a class="landing-title" href="{path}">{title}</a>{meta_html}</div>'
-            )
-        index_html += '<div class="landing-list">' + "\n".join(list_items) + "</div>"
-
-    index_html = template.replace("{{ content }}", index_html).replace(
+def render_template(template: str, content: str, nav_links: str) -> str:
+    """
+    Replace placeholders in the template.
+    """
+    return template.replace("{{ content }}", content).replace(
         "{{ nav_links }}", nav_links
     )
-    index_path = os.path.join(OUTPUT_DIR, "index.html")
 
-    # Load and render interests.html as a separate page
-    with open("pages/interests.html", "r", encoding="utf-8") as file:
-        interests_html = file.read()
 
-    interests_page = template.replace("{{ content }}", interests_html).replace(
-        "{{ nav_links }}", nav_links
+def render_posts(
+    posts: List[Post], template: str, nav_links: str, output_dir: Path
+) -> None:
+    """
+    Write each post's rendered HTML to *output_dir*.
+    """
+    for post in posts:
+        rendered = render_template(template, post.content_html, nav_links)
+        out_path = output_dir / f"{post.code}.html"
+        out_path.write_text(rendered, encoding="utf-8")
+        logging.info(f"Rendered {post.code} → {out_path.name}")
+
+
+def build_landing_list(posts: List[Post]) -> str:
+    """
+    Return the HTML snippet for the landing page list of posts.
+    """
+    if not posts:
+        return ""
+
+    items = []
+
+    for post in posts:
+        title_html = html.escape(post.title)
+        href = post.link_path.as_posix()  # e.g. 'posts/2024-01-index.html'
+        date_iso = post.date.strftime("%Y-%m-%d")
+        date_disp = post.date.strftime("%b %d, %Y")
+        meta_html = f'<div class="post-meta"><time datetime="{date_iso}">{date_disp}</time></div>'
+        items.append(
+            f'<div class="landing-item">'
+            f'<a class="landing-title" href="{href}">{title_html}</a>{meta_html}'
+            f"</div>"
+        )
+
+    return '<div class="landing-list">\n' + "\n".join(items) + "\n</div>"
+
+
+def render_pages(
+    pages: List[Page],
+    posts: List[Post],
+    template: str,
+    nav_links: str,
+    output_dir: Path,
+) -> None:
+    """
+    Render the static pages (including index with post list).
+    """
+    landing_list = build_landing_list(posts)
+
+    for page in pages:
+        page_path = Config.pages_dir / page.filename
+        page_content = page_path.read_text(encoding="utf-8")
+
+        content = page_content
+        if page.name == "index":
+            content += landing_list
+
+        rendered_page = render_template(template, content, nav_links)
+        out_name = "index.html" if page.name == "index" else page.filename
+        out_path = output_dir / out_name
+        out_path.write_text(rendered_page, encoding="utf-8")
+        logging.info(f"Rendered {out_name}")
+
+
+def copy_static(static_dir: Path, output_dir: Path) -> None:
+    """
+    Copy all files (and sub-directories) from *static_dir* to *output_dir*.
+    """
+    for item in static_dir.iterdir():
+        dest = output_dir / item.name
+        if item.is_file():
+            shutil.copy2(item, dest)
+        else:
+            shutil.copytree(item, dest, dirs_exist_ok=True)
+
+
+def ssg() -> None:
+    """
+    Run the static site generator.
+    """
+    config = Config()
+
+    template = load_template(config.template_path)
+    pages = discover_pages(config.pages_dir)
+    nav_links = generate_nav_links(pages)
+
+    ensure_dirs(
+        {
+            config.output_dir,
+            config.output_dir / "posts",
+            config.output_dir / "posts" / "images",
+        }
     )
-    interests_path = os.path.join(OUTPUT_DIR, "interests.html")
 
-    with open(index_path, "w", encoding="utf-8") as file:
-        file.write(index_html)
+    img_set: Set[str] = set()
+    posts: List[Post] = []
 
-    print("Rendered index.html")
+    for entry in sorted(config.posts_dir.iterdir()):
+        if not entry.is_dir():
+            continue
+        post = process_post(
+            entry.name, entry, config.output_dir / "posts" / "images", img_set
+        )
+        if post:
+            posts.append(post)
 
-    with open(interests_path, "w", encoding="utf-8") as file:
-        file.write(interests_page)
-
-    print("Rendered interests.html")
-
-    # Copy all CSS and JS files from static to output directory
-    for static_file in os.listdir("static"):
-        shutil.copy2(os.path.join("static", static_file), OUTPUT_DIR)
+    posts.sort(key=lambda p: p.date, reverse=True)
+    render_posts(posts, template, nav_links, config.output_dir / "posts")
+    render_pages(pages, posts, template, nav_links, config.output_dir)
+    copy_static(config.static_dir, config.output_dir)
 
 
 if __name__ == "__main__":

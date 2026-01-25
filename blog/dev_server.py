@@ -1,6 +1,7 @@
 import asyncio
 import os
 import signal
+from pathlib import Path
 
 from aiohttp import web
 from watchfiles import awatch
@@ -73,9 +74,9 @@ async def websocket_handler(request):
 async def file_handler(request):
     rel_path = request.path
     if rel_path == "/" or rel_path == "":
-        file_path = os.path.join("../build", "index.html")
+        file_path = os.path.join("./build", "index.html")
     else:
-        file_path = os.path.join("../build", rel_path.lstrip("/"))
+        file_path = os.path.join("./build", rel_path.lstrip("/"))
 
     if os.path.isdir(file_path):
         file_path = os.path.join(file_path, "index.html")
@@ -101,12 +102,16 @@ async def file_handler(request):
 
 
 async def watch_and_reload(app, ssg_func, watch_paths):
+    print(f"Setting up file watcher for paths: {watch_paths}")
     async for changes in awatch(*watch_paths):
-        print("Changes detected:", changes)
+        print(f"Changes detected: {changes}")
         try:
             ssg_func()
         except Exception as e:
             print("Error running ssg():", e)
+            import traceback
+
+            traceback.print_exc()
 
         # Broadcast reload to all connected websockets
         for ws in list(app["sockets"]):
@@ -123,6 +128,9 @@ async def on_startup(app):
 async def run_dev(ssg_func, host="127.0.0.1", port=8000, watch_paths=None):
     if watch_paths is None:
         watch_paths = ["static", "pages", "posts"]
+
+    # Convert string paths to Path objects for more reliable watching
+    watch_paths = [Path(p) if isinstance(p, str) else p for p in watch_paths]
 
     app = web.Application()
     app.on_startup.append(on_startup)
