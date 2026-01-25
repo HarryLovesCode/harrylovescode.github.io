@@ -1,4 +1,6 @@
-# Blurg
+# brain_dump.exe
+
+![Space Odyssey](blog/static/android-chrome-192x192.png)
 
 A blog with a custom static-site generator based on the lovely: [Carl Öst Wilkens´ Blog](https://ostwilkens.se/). It tweaks a few things, but ~does not deviate a whole lot~ deviates a ton.
 

@@ -288,8 +288,7 @@ def ssg():
 
     # Copy all CSS and JS files from static to output directory
     for static_file in os.listdir("static"):
-        if static_file.endswith(".css") or static_file.endswith(".js"):
-            shutil.copy2(os.path.join("static", static_file), OUTPUT_DIR)
+        shutil.copy2(os.path.join("static", static_file), OUTPUT_DIR)
 
 
 if __name__ == "__main__":
