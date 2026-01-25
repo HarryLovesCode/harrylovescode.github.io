@@ -90,21 +90,67 @@ Each unit of work would be:
 
 So if you visit 10 articles, your best-case scenario is 100%. That is an easy one. However the worst case scenario is slightly different. The two rates are mutually exclusive and describe multiple ways a tool can fail. One, because it misunderstood, and two because it "understood" but still chose the wrong route, or chose the right route once, but now chose a different.
 
-$$
-P(\text{Failure})=0.02+0.05=0.07
-$$
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow>
+    <mi>P</mi>
+    <mo>&#x2061;</mo>
+    <mrow>
+      <mo stretchy="false">(</mo>
+      <mtext>Failure</mtext>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mrow>
+  <mo>=</mo>
+  <mrow>
+    <mn>0.02</mn>
+    <mo>+</mo>
+    <mn>0.05</mn>
+  </mrow>
+  <mo>=</mo>
+  <mn>0.07</mn>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow>
+    <mrow>
+      <mi>P</mi>
+      <mo>&#x2061;</mo>
+      <mrow>
+        <mo stretchy="false">(</mo>
+        <mtext>Success</mtext>
+        <mo stretchy="false">)</mo>
+      </mrow>
+    </mrow>
+    <mo>=</mo>
+    <mrow>
+      <mn>1</mn>
+      <mo>&#x2212;</mo>
+      <mn>0.07</mn>
+    </mrow>
+    <mo>=</mo>
+    <mn>0.93</mn>
+  </mrow>
+  <mtext>&#xA0;or 93%</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Total success rate</mtext>
+  <mo>=</mo>
+  <msup>
+    <mrow>
+      <mo stretchy="false">(</mo>
+      <mn>0.93</mn>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mn>10</mn>
+    </mrow>
+  </msup>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Total success rate</mtext>
+  <mo>&#x2248;</mo>
+  <mn>0.48</mn>
+</math>
 
-$$
-P(\text{Success}) = 1 - 0.07 = 0.93 \text{ or 93\%}
-$$
-
-$$
-\text{Total success rate} = (0.93)^{10}
-$$
-
-$$
-\text{Total success rate} \approx 0.48
-$$
 
 So in the worst case scenario, you are 48% accurate. Now, let's assume something different. Let's say that the LLM does not decide to use a tool explicitly, the number of articles is fixed, but a maximum, and the process _is_ deterministic. Your success rate, once the tool is written is 100% assuming each article is reachable.
 
