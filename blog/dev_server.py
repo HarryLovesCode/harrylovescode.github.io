@@ -78,8 +78,21 @@ async def file_handler(request):
     else:
         file_path = os.path.join("./build", rel_path.lstrip("/"))
 
+    # If it's a directory, prefer index.html
     if os.path.isdir(file_path):
         file_path = os.path.join(file_path, "index.html")
+
+    # Resolve URLs without a .html suffix:
+    if not os.path.exists(file_path):
+        html_path = file_path + ".html"
+        if os.path.exists(html_path):
+            file_path = html_path
+        else:
+            index_path = os.path.join(file_path, "index.html")
+            if os.path.exists(index_path):
+                file_path = index_path
+            else:
+                raise web.HTTPNotFound()
 
     if file_path.endswith(".html"):
         try:

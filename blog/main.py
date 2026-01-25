@@ -74,7 +74,9 @@ def generate_nav_links(pages: List[Page]) -> str:
     """
     links = ['<a href="/">Home</a>\n']
     for page in pages:
-        links.append(f'<a href="/{page.filename}">{page.display_name}</a>\n')
+        if page.name == "index":
+            continue
+        links.append(f'<a href="/{page.name}">{page.display_name}</a>\n')
     return "".join(links)
 
 
@@ -283,7 +285,9 @@ def build_landing_list(posts: List[Post]) -> str:
 
     for post in posts:
         title_html = html.escape(post.title)
-        href = post.link_path.as_posix()  # e.g. 'posts/2024-01-index.html'
+        href = post.link_path.as_posix()
+        # Remove suffix for deployment and local server cleanliness
+        href = href.replace(".html", "")
         date_iso = post.date.strftime("%Y-%m-%d")
         date_disp = post.date.strftime("%b %d, %Y")
         meta_html = f'<div class="post-meta"><time datetime="{date_iso}">{date_disp}</time></div>'
