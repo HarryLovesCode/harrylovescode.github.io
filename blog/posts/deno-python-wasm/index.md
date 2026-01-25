@@ -2,6 +2,9 @@
 date: 1-22-2026
 tags:
   - Artifact
+  - AI
+  - Deno
+  - TS
 ---
 
 # Quick and dirty semi-safe environments with Deno + Wasm

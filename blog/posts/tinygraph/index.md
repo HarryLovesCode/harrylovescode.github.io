@@ -1,6 +1,8 @@
 ---
 date: 1-18-2026
 tags:
+  - TS
+  - AI
   - Code
 ---
 

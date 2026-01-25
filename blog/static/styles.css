@@ -489,7 +489,6 @@ details {
 }
 
 .prose details {
-  margin: 1rem 0;
   grid-column: wide;
 }
 
@@ -1326,4 +1325,8 @@ button.btn-lg,
 .scroll-to-top.hidden {
   opacity: 0;
   visibility: hidden;
+}
+/* Math spacing: 2rem vertical padding between adjacent <math> elements */
+math {
+  padding: 1rem;
 }

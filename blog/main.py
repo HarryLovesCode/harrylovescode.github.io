@@ -184,7 +184,7 @@ def ssg():
         # Convert Markdown to HTML
         html_content = markdown2.markdown(
             md_content,
-            extras=["fenced-code-blocks", "header-ids", "mermaid", "codehilite"],
+            extras=["fenced-code-blocks", "header-ids", "mermaid", "codehilite", "latex"],
         )
 
         # Add line numbers to code blocks

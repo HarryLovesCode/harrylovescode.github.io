@@ -2,6 +2,7 @@
 date: 1-21-2026
 tags:
   - Rant
+  - AI
 ---
 
 # Who (or What) Wrote OpenAI's Documentation?
