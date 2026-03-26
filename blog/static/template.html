@@ -87,7 +87,12 @@
           </svg>
         </button>
         <nav class="site-nav" id="siteNav">
-          {{ nav_links }}
+          <a href="/">Home</a>
+          {% for page in pages %}
+            {% if page.name != 'index' %}
+              <a href="/{{ page.name }}">{{ page.display_name }}</a>
+            {% endif %}
+          {% endfor %}
           <a
             href="https://github.com/harrylovescode"
             target="_blank"
@@ -97,7 +102,7 @@
         </nav>
       </div>
     </header>
-    <main id="content" class="container prose">{{ content }}</main>
+    <main id="content" class="container prose">{{ content|safe }}</main>
     <footer class="site-footer">
       <div class="container footer-content">
         <div>

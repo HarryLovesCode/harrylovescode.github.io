@@ -1,0 +1,16 @@
+<div class="landing-list">
+  {% for post in posts %}
+  <div class="landing-item">
+    <a
+      class="landing-title"
+      href="{{ post.link_path.as_posix() | replace('.html', '') }}"
+      >{{ post.title | e }}</a
+    >
+    <div class="post-meta">
+      <time datetime="{{ post.date.strftime('%Y-%m-%d') }}"
+        >{{ post.date.strftime('%b %d, %Y') }}</time
+      >
+    </div>
+  </div>
+  {% endfor %}
+</div>

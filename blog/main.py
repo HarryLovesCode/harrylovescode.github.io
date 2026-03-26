@@ -11,6 +11,7 @@ from typing import Dict, Iterable, List, Set, Tuple
 import markdown2
 import yaml
 from images import compress_image, filter_invalid_images
+from jinja2 import Template
 from render import add_line_numbers
 
 logger = logging.getLogger(__name__)
@@ -199,7 +200,6 @@ def process_post(
         tags = [t.strip() for t in metadata["tags"].split(",") if t.strip()]
     else:
         tags = []
-
     title = raw_title
     if not tags:  # try to pull tags from the title itself
         extracted, cleaned = extract_tags_from_title(raw_title)
@@ -215,18 +215,17 @@ def process_post(
     # Markdown + Code helpers
     html_content = convert_markdown(body)
     html_content = add_line_numbers(html_content)
+    tag_templ_src = open(Config.base_dir / "templates" / "post-tags.html").read()
+    tag_templ = Template(tag_templ_src)
 
-    # Tag write
+    # Handle tags
     if tags:
-        tag_html = (
-            '<div class="post-meta"><div class="tags">'
-            + "".join(f'<span class="tag">{t}</span>' for t in tags)
-            + "</div></div>"
-        )
+        tag_html = tag_templ.render(tags=tags)
         if "</h1>" in html_content:
             html_content = html_content.replace("</h1>", f"</h1>{tag_html}", 1)
         else:
             html_content = tag_html + html_content
+
     # Fix image paths
     html_content = html_content.replace('<img src="', '<img src="/posts/images/')
 
@@ -252,23 +251,21 @@ def process_post(
     )
 
 
-def render_template(template: str, content: str, nav_links: str) -> str:
+def render_template(template: str, content: str, pages: List[Page]) -> str:
     """
-    Replace placeholders in the template.
+    Render a Jinja2 template using content + page nav context.
     """
-    return template.replace("{{ content }}", content).replace(
-        "{{ nav_links }}", nav_links
-    )
+    return Template(template).render(content=content, pages=pages)
 
 
 def render_posts(
-    posts: List[Post], template: str, nav_links: str, output_dir: Path
+    posts: List[Post], template: str, pages: List[Page], output_dir: Path
 ) -> None:
     """
     Write each post's rendered HTML to *output_dir*.
     """
     for post in posts:
-        rendered = render_template(template, post.content_html, nav_links)
+        rendered = render_template(template, post.content_html, pages)
         out_path = output_dir / f"{post.code}.html"
         out_path.write_text(rendered, encoding="utf-8")
         logging.info(f"Rendered {post.code} → {out_path.name}")
@@ -281,30 +278,18 @@ def build_landing_list(posts: List[Post]) -> str:
     if not posts:
         return ""
 
-    items = []
+    landing_template = (Config.base_dir / "templates" / "landing-list.html").read_text(
+        encoding="utf-8"
+    )
+    template = Template(landing_template)
 
-    for post in posts:
-        title_html = html.escape(post.title)
-        href = post.link_path.as_posix()
-        # Remove suffix for deployment and local server cleanliness
-        href = href.replace(".html", "")
-        date_iso = post.date.strftime("%Y-%m-%d")
-        date_disp = post.date.strftime("%b %d, %Y")
-        meta_html = f'<div class="post-meta"><time datetime="{date_iso}">{date_disp}</time></div>'
-        items.append(
-            f'<div class="landing-item">'
-            f'<a class="landing-title" href="{href}">{title_html}</a>{meta_html}'
-            f"</div>"
-        )
-
-    return '<div class="landing-list">\n' + "\n".join(items) + "\n</div>"
+    return template.render(posts=posts)
 
 
 def render_pages(
     pages: List[Page],
     posts: List[Post],
     template: str,
-    nav_links: str,
     output_dir: Path,
 ) -> None:
     """
@@ -320,7 +305,7 @@ def render_pages(
         if page.name == "index":
             content += landing_list
 
-        rendered_page = render_template(template, content, nav_links)
+        rendered_page = render_template(template, content, pages)
         out_name = "index.html" if page.name == "index" else page.filename
         out_path = output_dir / out_name
         out_path.write_text(rendered_page, encoding="utf-8")
@@ -347,7 +332,6 @@ def ssg() -> None:
 
     template = load_template(config.template_path)
     pages = discover_pages(config.pages_dir)
-    nav_links = generate_nav_links(pages)
 
     ensure_dirs(
         {
@@ -370,8 +354,8 @@ def ssg() -> None:
             posts.append(post)
 
     posts.sort(key=lambda p: p.date, reverse=True)
-    render_posts(posts, template, nav_links, config.output_dir / "posts")
-    render_pages(pages, posts, template, nav_links, config.output_dir)
+    render_posts(posts, template, pages, config.output_dir / "posts")
+    render_pages(pages, posts, template, config.output_dir)
     copy_static(config.static_dir, config.output_dir)
 
 

@@ -2,8 +2,17 @@ import re
 from pathlib import Path
 from typing import List
 import logging
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 logger = logging.getLogger(__name__)
+
+TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
+jinja_env = Environment(
+    loader=FileSystemLoader(str(TEMPLATES_DIR)),
+    autoescape=select_autoescape(default=True),
+)
+_codehilite_template = jinja_env.get_template("codehilite.html")
+_post_tags_template = jinja_env.get_template("post-tags.html")
 
 
 def add_line_numbers(html_content: str) -> str:
@@ -23,7 +32,7 @@ def add_line_numbers(html_content: str) -> str:
         if "class=\"ln\"" in code_block or "<span class=\"ln\"" in code_block:
             return match.group(0)
         numbered = add_lines_to_block(code_block)
-        return f'<div class="codehilite"><pre><span></span><code>{numbered}</code></pre></div>'
+        return _codehilite_template.render(code=numbered)
 
     html_content = re.sub(
         r'<div class="codehilite">\s*<pre><span></span><code>(.*?)</code></pre>\s*</div>',
@@ -37,7 +46,7 @@ def add_line_numbers(html_content: str) -> str:
         if "class=\"ln\"" in code_block or "<span class=\"ln\"" in code_block:
             return match.group(0)
         numbered = add_lines_to_block(code_block)
-        return f'<div class="codehilite"><pre><span></span><code>{numbered}</code></pre></div>'
+        return _codehilite_template.render(code=numbered)
 
     html_content = re.sub(r"<pre><code>(.*?)</code></pre>", process_plain, html_content, flags=re.DOTALL)
 
@@ -52,11 +61,7 @@ def inject_tags_and_fix_image_paths(html_content: str, tags: List[str], post_cod
     to `/posts/images/{post_code}/{filename}`. External or absolute URLs are left untouched.
     """
     if tags:
-        tag_html = (
-            '<div class="post-meta"><div class="tags">'
-            + "".join(f'<span class="tag">{t}</span>' for t in tags)
-            + "</div></div>"
-        )
+        tag_html = _post_tags_template.render(tags=tags)
         if "</h1>" in html_content:
             html_content = html_content.replace("</h1>", f"</h1>{tag_html}", 1)
         else:
