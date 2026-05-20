@@ -1,4 +1,3 @@
-import html
 import logging
 import os
 import re
@@ -12,7 +11,7 @@ import markdown2
 import yaml
 from images import compress_image, filter_invalid_images
 from jinja2 import Template
-from render import add_line_numbers
+from rss import write_feed
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -67,18 +66,6 @@ def discover_pages(pages_dir: Path) -> List[Page]:
                 Page(name=name, filename=entry.name, display_name=display_name)
             )
     return pages
-
-
-def generate_nav_links(pages: List[Page]) -> str:
-    """
-    Build the navigation bar (Home + each page).
-    """
-    links = ['<a href="/">Home</a>\n']
-    for page in pages:
-        if page.name == "index":
-            continue
-        links.append(f'<a href="/{page.name}">{page.display_name}</a>\n')
-    return "".join(links)
 
 
 def ensure_dirs(paths: Iterable[Path]) -> None:
@@ -162,7 +149,7 @@ def convert_markdown(md: str) -> str:
     """
     return markdown2.markdown(
         md,
-        extras=["fenced-code-blocks", "header-ids", "mermaid", "codehilite"],
+        extras=["fenced-code-blocks", "header-ids", "mermaid"],
     )
 
 
@@ -214,7 +201,7 @@ def process_post(
 
     # Markdown + Code helpers
     html_content = convert_markdown(body)
-    html_content = add_line_numbers(html_content)
+    # html_content = add_line_numbers(html_content)
     tag_templ_src = open(Config.base_dir / "templates" / "post-tags.html").read()
     tag_templ = Template(tag_templ_src)
 
@@ -356,6 +343,7 @@ def ssg() -> None:
     posts.sort(key=lambda p: p.date, reverse=True)
     render_posts(posts, template, pages, config.output_dir / "posts")
     render_pages(pages, posts, template, config.output_dir)
+    write_feed(posts, config.output_dir)
     copy_static(config.static_dir, config.output_dir)
 
 

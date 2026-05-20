@@ -1,143 +1,56 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Notes and essays by Harry" />
-    <meta
-      name="theme-color"
-      content="#121212"
-      media="(prefers-color-scheme: dark)"
-    />
-    <meta
-      name="theme-color"
-      content="#f3f4f6"
-      media="(prefers-color-scheme: light)"
-    />
-    <meta property="og:title" content="Harry's Blog" />
-    <meta property="og:description" content="Notes and essays by Harry" />
-    <meta name="twitter:card" content="summary" />
-    <link rel="canonical" href="/" />
-    <title>Harry's Blog</title>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
-    <script
-      defer
-      src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.12.0/mermaid.min.js"
-      integrity="sha512-5TKaYvhenABhlGIKSxAWLFJBZCSQw7HTV7aL1dJcBokM/+3PNtfgJFlv8E6Us/B1VMlQ4u8sPzjudL9TEQ06ww=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    ></script>
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="manifest" href="/site.webmanifest" />
-    <link rel="stylesheet" href="/styles.css" />
-    <link rel="stylesheet" href="/code.css" />
-  </head>
 
-  <body>
-    <script defer src="/mermaid-init.js"></script>
-    <script defer src="/prefetch-nav.js"></script>
-    <script defer src="/scroll-to-top.js"></script>
-    <script defer src="/responsive.js"></script>
-    <a class="sr-only" href="#content">Skip to content</a>
-    <header class="site-header">
-      <div class="container header-content">
-        <a href="/" class="site-title">Harry's Blog</a>
-        <button
-          class="nav-toggle"
-          id="navToggle"
-          aria-expanded="false"
-          aria-controls="siteNav"
-          aria-label="Toggle navigation"
-        >
-          <svg
-            class="icon-hamburger"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-          <svg
-            class="icon-close"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            style="display: none"
-          >
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-        <nav class="site-nav" id="siteNav">
-          <a href="/">Home</a>
-          {% for page in pages %}
-            {% if page.name != 'index' %}
-              <a href="/{{ page.name }}">{{ page.display_name }}</a>
-            {% endif %}
-          {% endfor %}
-          <a
-            href="https://github.com/harrylovescode"
-            target="_blank"
-            rel="noopener noreferrer"
-            >GitHub</a
-          >
-        </nav>
-      </div>
-    </header>
-    <main id="content" class="container prose">{{ content|safe }}</main>
-    <footer class="site-footer">
-      <div class="container footer-content">
-        <div>
-          <p>&copy; 2026 Harry. All rights reserved.</p>
-          <p>Rendered with ❤️ by my own SSG.</p>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Notes and essays by Harry" />
+  <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)" />
+  <meta property="og:title" content="Harry's Blog" />
+  <meta property="og:description" content="Notes and essays by Harry" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="canonical" href="/" />
+  <title>Harry's Blog</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.12.0/mermaid.min.js"
+    integrity="sha512-5TKaYvhenABhlGIKSxAWLFJBZCSQw7HTV7aL1dJcBokM/+3PNtfgJFlv8E6Us/B1VMlQ4u8sPzjudL9TEQ06ww=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/code.css" />
+</head>
 
-        <div class="footer-links">
-          <a href="/">Home</a>
-          <a
-            href="https://github.com/harrylovescode"
-            target="_blank"
-            rel="noopener noreferrer"
-            >GitHub</a
-          >
-        </div>
+<body>
+  <script defer src="/mermaid-init.js"></script>
+  <script defer src="/prefetch-nav.js"></script>
+  <script defer src="/scroll-to-top.js"></script>
+  <script defer src="/responsive.js"></script>
+  <header class="site-header">
+    <div class="container header-content">
+      <a href="/" class="site-title">Harry's Blog</a>
+    </div>
+  </header>
+  <main id="content" class="container prose">{{ content|safe }}</main>
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div>
+        <p>&copy; 2026 Harry. All rights reserved.</p>
+        <p>Rendered with ❤️ by my own SSG.</p>
       </div>
-    </footer>
-    <button
-      id="scrollToTopBtn"
-      class="scroll-to-top"
-      aria-label="Scroll to top"
-    >
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <polyline points="18 15 12 9 6 15"></polyline>
-      </svg>
-    </button>
-  </body>
+
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="https://github.com/harrylovescode" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </footer>
+</body>
+
 </html>

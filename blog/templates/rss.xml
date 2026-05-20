@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+	<title>{{ feed_name }}</title>
+	<id>{{ homepage_url }}</id>
+	<link rel="alternate" href="{{ homepage_url }}"/>
+	<link rel="self" href="{{ feed_url }}"/>
+	<updated>{{ last_updated }}</updated>
+	<author>
+		<name>{{ author_name }}</name>
+	</author>
+	{% for post in posts %}
+	<entry>
+		<title>{{ post.title }}</title>
+		<link rel="alternate" type="text/html" href="{{ post.html_url }}"/>
+		<id>{{ post.permalink }}</id>
+		<published>{{ post.first_post_time }}</published>
+		<updated>{{ post.last_update_time }}</updated>
+		<content type="html">{{ post.html }}</content>
+	</entry>
+	{% endfor %}
+</feed>
