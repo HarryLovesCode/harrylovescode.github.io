@@ -10,6 +10,26 @@ TEMPLATE_PATH = BASE_DIR / "templates" / "rss.xml"
 SITE_URL = "https://harrylovescode.github.io"
 FEED_NAME = "Harry Loves Code"
 AUTHOR_NAME = "Harry G"
+FEED_PATH = "/rss.xml"
+FEED_ALIAS_PATH = "/feed"
+
+FEED_REDIRECT_HTML = """<!doctype html>
+<html lang=\"en\">
+<head>
+    <meta charset=\"utf-8\" />
+    <meta http-equiv=\"refresh\" content=\"0; url={feed_path}\" />
+    <meta name=\"robots\" content=\"noindex\" />
+    <link rel=\"canonical\" href=\"{feed_path}\" />
+    <title>{feed_name} Feed</title>
+    <script>
+        location.replace({feed_path_json});
+    </script>
+</head>
+<body>
+    <p>Redirecting to the feed at <a href=\"{feed_path}\">{feed_path}</a>.</p>
+</body>
+</html>
+"""
 
 def _atom_timestamp(value: datetime) -> str:
     return value.replace(tzinfo=UTC).isoformat().replace("+00:00", "Z")
@@ -29,7 +49,7 @@ def build_feed_data(posts) -> dict:
     return {
         "feed_name": FEED_NAME,
         "homepage_url": SITE_URL,
-        "feed_url": f"{SITE_URL}/rss.xml",
+        "feed_url": f"{SITE_URL}{FEED_PATH}",
         "last_updated": last_updated.isoformat().replace("+00:00", "Z"),
         "author_name": AUTHOR_NAME,
         "posts": [
@@ -56,8 +76,18 @@ def generate_feed(posts) -> str:
 
 
 def write_feed(posts, output_dir: Path) -> Path:
-    output_path = output_dir / "rss.xml"
+    output_path = output_dir / FEED_PATH.lstrip("/")
     output_path.write_text(generate_feed(posts), encoding="utf-8")
+    alias_dir = output_dir / FEED_ALIAS_PATH.lstrip("/")
+    alias_dir.mkdir(parents=True, exist_ok=True)
+    (alias_dir / "index.html").write_text(
+        FEED_REDIRECT_HTML.format(
+            feed_name=FEED_NAME,
+            feed_path=FEED_PATH,
+            feed_path_json=repr(FEED_PATH),
+        ),
+        encoding="utf-8",
+    )
     return output_path
 
 
